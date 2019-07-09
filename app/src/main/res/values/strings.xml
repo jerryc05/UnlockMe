@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">UnlockMe</string>
+    <string name="device_admin_explanation">This app needs Device Admin to work properly.</string>
+    <string name="permission_camera_explanation">This app needs Camera permission to work properly.</string>
 </resources>
