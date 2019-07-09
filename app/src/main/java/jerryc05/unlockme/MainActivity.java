@@ -15,6 +15,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraDevice.StateCallback;
 import android.hardware.camera2.CameraManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jerryc05.unlockme.helpers.URLConnectionBuilder;
 import jerryc05.unlockme.receivers.MyDAReceiver;
 
 @SuppressWarnings("NullableProblems")
@@ -50,18 +52,24 @@ public class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    findViewById(R.id.activity_main_button_takePhoto)
-            .setOnClickListener(new View.OnClickListener() {
-              @Override
-              public void onClick(View view) {
-                new Thread(new Runnable() {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        checkUpdate();
+        findViewById(R.id.activity_main_button_takePhoto)
+                .setOnClickListener(new View.OnClickListener() {
                   @Override
-                  public void run() {
-                    takePhoto();
+                  public void onClick(View view) {
+                    new Thread(new Runnable() {
+                      @Override
+                      public void run() {
+                        takePhoto();
+                      }
+                    }).start();
                   }
-                }).start();
-              }
-            });
+                });
+      }
+    }).start();
   }
 
   @Override
@@ -119,6 +127,47 @@ public class MainActivity extends Activity {
               granted_str, Toast.LENGTH_SHORT)
               .show();
       if (granted) takePhoto();
+    }
+  }
+
+  protected void checkUpdate() {
+    final String
+            keyword = "/jerryc05/UnlockMe/tree",
+            URL = "https://www.github.com/jerryc05/UnlockMe/releases";
+    try (URLConnectionBuilder connectionBuilder = URLConnectionBuilder
+            .get(URL)
+            .setConnectTimeout(1000)
+            .setReadTimeout(1000)
+            .connect()) {
+      String result = connectionBuilder.getResult();
+      result = result.substring(result.indexOf(keyword) +
+              keyword.length() + 2);
+      final String latest = result.substring(0, result.indexOf('"'));
+
+      if (!latest.equals(BuildConfig.VERSION_NAME))
+        runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("New Version Available")
+                    .setMessage("Do you want to upgrade from\n" +
+                            BuildConfig.VERSION_NAME + "  to  " + latest + '?')
+                    .setPositiveButton("YES",
+                            new DialogInterface.OnClickListener() {
+                              @Override
+                              public void onClick(DialogInterface dialogInterface,
+                                                  int i) {
+                                startActivity(new Intent(Intent.ACTION_VIEW,
+                                        Uri.parse(URL + "/tag/v" + latest)));
+                              }
+                            })
+                    .setNegativeButton("NO", null)
+                    .show();
+          }
+        });
+
+    } catch (Exception e) {
+      AlertExceptionToUI(e);
     }
   }
 
@@ -304,7 +353,7 @@ public class MainActivity extends Activity {
       @Override
       public void run() {
         new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Fatal Error")
+                .setTitle("Crash Report")
                 .setMessage(e.toString())
                 .setCancelable(false)
                 .setPositiveButton("OK", onClickListener)
