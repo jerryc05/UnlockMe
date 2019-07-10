@@ -29,10 +29,10 @@ import jerryc05.unlockme.BuildConfig;
  * @see javax.net.ssl.HttpsURLConnection
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class URLConnectionBuilder implements AutoCloseable {
+public final class URLConnectionBuilder implements AutoCloseable {
 
   private final static String
-          TAG = URLConnectionBuilder.class.getName();
+          TAG = URLConnectionBuilder.class.getSimpleName();
 
   public final static String
           METHOD_GET     = "GET",

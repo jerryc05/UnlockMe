@@ -11,7 +11,7 @@ import jerryc05.unlockme.BuildConfig;
 @SuppressWarnings("NullableProblems")
 public class MyDAReceiver extends DeviceAdminReceiver {
 
-  private final static String TAG = MyDAReceiver.class.getName();
+  private final static String TAG = MyDAReceiver.class.getSimpleName();
   private static       int    failedAttempt;
 
   @Override
