@@ -3,41 +3,19 @@ package jerryc05.unlockme.helpers;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.ImageFormat;
-import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CameraMetadata;
-import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.TotalCaptureResult;
-import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.Image;
-import android.media.ImageReader;
 import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
-import android.util.Size;
 import android.util.SparseIntArray;
-import android.view.Surface;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.UUID;
+import android.widget.Toast;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.MainActivity;
-import jerryc05.unlockme.R;
 
 public final class Camera2APIHelper {
 
@@ -66,6 +44,7 @@ public final class Camera2APIHelper {
 //      openCamera2(activity);
     }
   }
+
   private static boolean requestCameraPermission(MainActivity activity) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
             activity.checkSelfPermission(Manifest.permission.CAMERA) ==
@@ -99,6 +78,21 @@ public final class Camera2APIHelper {
               MainActivity.REQUEST_CODE_CAMERA);
 
     return false;
+  }
+
+  public static void onRequestPermissionFinished(MainActivity activity,
+                                                 int[] grantResults) {
+    final boolean granted = grantResults.length > 0 &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED;
+    final String granted_str = granted
+            ? "Camera Permission Granted √"
+            : "Camera Permission Denied ×";
+
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onRequestPermissionsResult: " + granted);
+
+    Toast.makeText(activity, granted_str, Toast.LENGTH_SHORT).show();
+    if (granted) Camera2APIHelper.automaticTakePhoto(activity);
   }
 
 /*

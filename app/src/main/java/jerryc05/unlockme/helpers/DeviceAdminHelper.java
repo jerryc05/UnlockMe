@@ -26,7 +26,7 @@ public final class DeviceAdminHelper {
   private static ComponentName                   mComponentName;
   private static DialogInterface.OnClickListener onClickListener;
 
-  public static void requestDeviceAdmin(MainActivity activity) {
+  public static void requestPermission(MainActivity activity) {
     if (activity.requestDeviceAdminLock != null) {
       activity.requestDeviceAdminLock.unlock();
       activity.requestDeviceAdminLock = null;
@@ -54,7 +54,7 @@ public final class DeviceAdminHelper {
         }
       });
     } else if (BuildConfig.DEBUG)
-      Log.d(TAG, "requestDeviceAdmin: DA is activated!");
+      Log.d(TAG, "requestPermission: DA is activated!");
   }
 
   public static void onRequestPermissionFinished(MainActivity activity) {

@@ -4,12 +4,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -21,8 +18,6 @@ import jerryc05.unlockme.helpers.URLConnectionBuilder;
 public final class MainActivity extends Activity
         implements View.OnClickListener {
 
-  private final static String
-          TAG                       = MainActivity.class.getSimpleName();
   public final static  int
           REQUEST_CODE_CAMERA       = 0,
           REQUEST_CODE_DEVICE_ADMIN = 1;
@@ -53,7 +48,7 @@ public final class MainActivity extends Activity
       public void run() {
         if (requestDeviceAdminLock != null)
           requestDeviceAdminLock.lock();
-        DeviceAdminHelper.requestDeviceAdmin( MainActivity.this);
+        DeviceAdminHelper.requestPermission(MainActivity.this);
       }
     }).start();
   }
@@ -71,21 +66,9 @@ public final class MainActivity extends Activity
   public void onRequestPermissionsResult(int requestCode,
                                          String[] permissions,
                                          int[] grantResults) {
-    if (requestCode == REQUEST_CODE_CAMERA) {
-      final boolean granted = grantResults.length > 0 &&
-              grantResults[0] == PackageManager.PERMISSION_GRANTED;
-      final String granted_str = granted
-              ? "Camera Permission Granted √"
-              : "Camera Permission Denied ×";
-
-      if (BuildConfig.DEBUG)
-        Log.d(TAG, "onRequestPermissionsResult: " + granted);
-
-      Toast.makeText(this,
-              granted_str, Toast.LENGTH_SHORT)
-              .show();
-      if (granted) Camera2APIHelper.automaticTakePhoto(this);
-    }
+    if (requestCode == REQUEST_CODE_CAMERA)
+      Camera2APIHelper.onRequestPermissionFinished(
+              this, grantResults);
   }
 
   @Override
@@ -103,6 +86,7 @@ public final class MainActivity extends Activity
     final String
             keyword = "/jerryc05/UnlockMe/tree",
             URL = "https://www.github.com/jerryc05/UnlockMe/releases";
+
     try (URLConnectionBuilder connectionBuilder = URLConnectionBuilder
             .get(URL)
             .setConnectTimeout(1000)
