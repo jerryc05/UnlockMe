@@ -43,11 +43,6 @@ public class URLConnectionBuilder implements AutoCloseable {
           METHOD_DELETE  = "DELETE",
           METHOD_TRACE   = "TRACE";
 
-  @Override
-  public void close() {
-    disconnect();
-  }
-
   private boolean       isHTTP;
   private URLConnection urlConnection;
 
@@ -78,11 +73,16 @@ public class URLConnectionBuilder implements AutoCloseable {
     return this;
   }
 
+  @Override
+  public void close() {
+    disconnect();
+  }
+
   public String getResult(String charset) throws IOException {
     try {
       String result;
       {
-        InputStream           inputStream  = (isHTTP
+        InputStream inputStream = (isHTTP
                 ? urlConnection
                 : (HttpsURLConnection) urlConnection).getInputStream();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

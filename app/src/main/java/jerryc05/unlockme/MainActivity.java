@@ -1,6 +1,7 @@
 package jerryc05.unlockme;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
@@ -9,20 +10,40 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraDevice.StateCallback;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
+import android.media.ImageReader;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
+import android.util.Size;
+import android.util.SparseIntArray;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
@@ -37,15 +58,24 @@ public class MainActivity extends Activity {
           REQUEST_CODE_CAMERA       = 0,
           REQUEST_CODE_DEVICE_ADMIN = 1;
 
-  protected ReentrantLock         requestDeviceAdminLock;
-  protected DevicePolicyManager   mDevicePolicyManager;
-  private   ComponentName         mComponentName;
-  private   String                cameraID;
-  private   CameraCharacteristics mCameraCharacteristics;
-  private   CameraManager         mCameraManager;
-  private   CameraCaptureSession  mCameraCaptureSession;
-  private   StateCallback         mStateCallback;
-  protected CameraDevice          mCameraDevice;
+  protected            ReentrantLock         requestDeviceAdminLock;
+  protected            DevicePolicyManager   mDevicePolicyManager;
+  private              ComponentName         mComponentName;
+  protected            String                cameraID;
+  private              CameraCharacteristics mCameraCharacteristics;
+  protected            CameraManager         mCameraManager;
+  private              CameraCaptureSession  mCameraCaptureSession;
+  protected            StateCallback         mStateCallback;
+  protected            CameraDevice          mCameraDevice;
+  private static final SparseIntArray        ORIENTATIONS = 
+          new SparseIntArray();
+
+  static {
+    ORIENTATIONS.append(Surface.ROTATION_0, 90);
+    ORIENTATIONS.append(Surface.ROTATION_90, 0);
+    ORIENTATIONS.append(Surface.ROTATION_180, 270);
+    ORIENTATIONS.append(Surface.ROTATION_270, 180);
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -205,7 +235,7 @@ public class MainActivity extends Activity {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "takePhoto: ");
 
-    if (requestRuntimePermissions()) {
+    if (requestCameraPermission()) {
       if (BuildConfig.DEBUG)
         Log.d(TAG, "takePhoto: Permission acquired!");
 
@@ -215,7 +245,7 @@ public class MainActivity extends Activity {
     }
   }
 
-  private boolean requestRuntimePermissions() {
+  private boolean requestCameraPermission() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
             checkSelfPermission(Manifest.permission.CAMERA) ==
                     PackageManager.PERMISSION_GRANTED)
@@ -232,6 +262,7 @@ public class MainActivity extends Activity {
                   .setCancelable(false)
                   .setPositiveButton("OK",
                           new DialogInterface.OnClickListener() {
+                            @SuppressLint("NewApi")
                             @Override
                             public void onClick(DialogInterface dialogInterface,
                                                 int i) {
@@ -280,37 +311,22 @@ public class MainActivity extends Activity {
           @Override
           public void onOpened(CameraDevice cameraDevice) {
             mCameraDevice = cameraDevice;
-            //创建CameraPreviewSession
-//                createCameraPreviewSession();
-//                    try {
-//                      mCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-//                      mCaptureRequestBuilder.addTarget(previewSurface);
-//                      cameraDevice.createCaptureSession(Arrays.asList(previewSurface, mImageReader.getSurface()), new CameraCaptureSession.StateCallback() {
-//                        @Override
-//                        public void onConfigured(CameraCaptureSession session) {
-//                          try {
-//                            mCaptureRequest = mCaptureRequestBuilder.build();
-//                            mCameraCaptureSession = session;
-//                            mCameraCaptureSession.setRepeatingRequest(mCaptureRequest, null, mCameraHandler);
-//                          } catch (CameraAccessException e) {
-//                            e.printStackTrace();
-//                          }
-//                        }
-//
-//                        @Override
-//                        public void onConfigureFailed(CameraCaptureSession session) {
-//
-//                        }
-//                      }, mCameraHandler);
-//                    } catch (CameraAccessException e) {
-//                      e.printStackTrace();
-//                    }
+            try {
+              captureCamera();
+            } catch (CameraAccessException e) {
+              AlertExceptionToUI(e);
+            }
           }
 
           @Override
           public void onDisconnected(CameraDevice cameraDevice) {
             cameraDevice.close();
             mCameraDevice = null;
+          }
+
+          @Override
+          public void onClosed(CameraDevice camera) {
+            capturingListener.onDoneCapturingAllPhotos(picturesTaken);
           }
 
           @Override
@@ -326,19 +342,132 @@ public class MainActivity extends Activity {
   }
 
   private void openCamera2() {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            checkSelfPermission(Manifest.permission.CAMERA) ==
-                    PackageManager.PERMISSION_GRANTED) {
-      try {
-        mCameraManager.openCamera(cameraID, mStateCallback, null);
-      } catch (CameraAccessException e) {
-        AlertExceptionToUI(e);
-      }
-    } else
-      requestRuntimePermissions();
+    if (requestCameraPermission())
+      runOnUiThread(new Runnable() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void run() {
+          try {
+            mCameraManager.openCamera(cameraID, mStateCallback, null);
+          } catch (CameraAccessException e) {
+            AlertExceptionToUI(e);
+          }
+        }
+      });
   }
 
-  private void AlertExceptionToUI(Exception e) {
+  protected void captureCamera() throws CameraAccessException {
+
+    if (null == mCameraDevice) {
+      Log.e(TAG, "mCameraDevice is null");
+      return;
+    }
+    Size[]                      jpegSizes              = null;
+    StreamConfigurationMap      streamConfigurationMap =
+            mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+    if (streamConfigurationMap != null) {
+      jpegSizes = streamConfigurationMap.getOutputSizes(ImageFormat.JPEG);
+    }
+    final boolean       jpegSizesNotEmpty = jpegSizes != null && 0 < jpegSizes.length;
+    int                 width             = jpegSizesNotEmpty ? jpegSizes[0].getWidth() : 640;
+    int                 height            = jpegSizesNotEmpty ? jpegSizes[0].getHeight() : 480;
+    final ImageReader   imageReader            = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
+    final List<Surface> outputSurfaces    = new ArrayList<>();
+    outputSurfaces.add(imageReader.getSurface());
+    final CaptureRequest.Builder captureBuilder = 
+            mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+    
+    captureBuilder.addTarget(imageReader.getSurface());
+    captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+    captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,
+     ORIENTATIONS.get(getWindowManager().getDefaultDisplay().getRotation()));
+    imageReader.setOnImageAvailableListener(onImageAvailableListener, null);
+    mCameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
+              @Override
+              public void onConfigured( CameraCaptureSession session) {
+                try {
+                  session.capture(captureBuilder.build(), captureListener, null);
+                } catch (final CameraAccessException e) {
+                  AlertExceptionToUI(e);
+                }
+              }
+
+              @Override
+              public void onConfigureFailed( CameraCaptureSession session) {
+              }
+            }
+            , null);
+  }
+
+  private final ImageReader.OnImageAvailableListener onImageAvailableListener = (ImageReader imReader) -> {
+    final Image      image  = imReader.acquireLatestImage();
+    final ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+    final byte[]     bytes  = new byte[buffer.capacity()];
+    buffer.get(bytes);
+    saveImageToDisk(bytes);
+    image.close();
+  };
+
+
+
+  protected final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
+    @Override
+    public void onCaptureCompleted( CameraCaptureSession session,  CaptureRequest request,
+                                    TotalCaptureResult result) {
+      super.onCaptureCompleted(session, request, result);
+      if (picturesTaken.lastEntry() != null) {
+        capturingListener.onCaptureDone(picturesTaken.lastEntry().getKey(), picturesTaken.lastEntry().getValue());
+        Log.i(TAG, "done taking picture from camera " + mCameraDevice.getId());
+      }
+      closeCamera();
+    }
+  };
+
+
+
+
+
+  private void saveImageToDisk(final byte[] bytes) {
+    final String cameraId = mCameraDevice == null ? UUID.randomUUID().toString() : this.mCameraDevice.getId();
+    final File   file     = new File(Environment.getExternalStorageDirectory() + "/" + cameraId + "_pic.jpg");
+    try (final OutputStream output = new FileOutputStream(file)) {
+      output.write(bytes);
+      this.picturesTaken.put(file.getPath(), bytes);
+    } catch (final IOException e) {
+      Log.e(TAG, "Exception occurred while saving picture to external storage ", e);
+    }
+  }
+
+
+  protected void closeCamera() {
+    Log.d(TAG, "closing camera " + mCameraDevice.getId());
+    if (null != mCameraDevice && !cameraClosed) {
+      mCameraDevice.close();
+      mCameraDevice = null;
+    }
+    if (null != imageReader) {
+      imageReader.close();
+      imageReader = null;
+    }
+  }
+
+
+  protected TreeMap<String, byte[]> picturesTaken=new TreeMap<>();
+
+
+protected PictureCapturingListener capturingListener =
+
+
+
+
+
+
+
+
+
+
+
+  void AlertExceptionToUI(Exception e) {
     AlertExceptionToUI(e, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialogInterface, int i) {
