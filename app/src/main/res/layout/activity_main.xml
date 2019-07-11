@@ -9,21 +9,14 @@
         android:id="@+id/activity_main_button_front"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="291dp"
-        android:layout_marginEnd="84dp"
-        android:gravity="center_horizontal"
+        android:layout_centerInParent="true"
         android:text="Take Photo on front camera!" />
 
     <Button
         android:id="@+id/activity_main_button_back"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="84dp"
-        android:layout_marginBottom="272dp"
-        android:gravity="center_horizontal"
+        android:layout_below="@+id/activity_main_button_front"
+        android:layout_centerHorizontal="true"
         android:text="Take Photo on back camera!" />
 </RelativeLayout>

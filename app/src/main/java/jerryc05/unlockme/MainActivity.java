@@ -10,6 +10,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jerryc05.unlockme.helpers.Camera2APIHelper;
@@ -24,39 +27,51 @@ public final class MainActivity extends Activity
           REQUEST_CODE_DEVICE_ADMIN              = 0,
           REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
-  public        ReentrantLock requestDeviceAdminLock;
-  public static Context       applicationContext;
+  public        ReentrantLock      requestDeviceAdminLock;
+  public static Context            applicationContext;
+  public static ThreadPoolExecutor threadPoolExecutor;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    new Thread(new Runnable() {
+    getThreadPoolExecutor().execute(new Runnable() {
       @Override
       public void run() {
         applicationContext = getApplicationContext();
-        checkUpdate();
         findViewById(R.id.activity_main_button_front)
                 .setOnClickListener(MainActivity.this);
         findViewById(R.id.activity_main_button_back)
                 .setOnClickListener(MainActivity.this);
+        checkUpdate();
       }
-    }).start();
+    });
   }
 
-  @Override
-  protected void onStart() {
-    super.onStart();
+//  @Override
+//  protected void onStart() {
+//    super.onStart();
+//
+//    threadPoolExecutor.execute(new Runnable() {
+//      @Override
+//      public void run() {
+//        if (requestDeviceAdminLock != null)
+//          requestDeviceAdminLock.lock();
+//        DeviceAdminHelper.requestPermission(MainActivity.this);
+//      }
+//    });
+//  }
 
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        if (requestDeviceAdminLock != null)
-          requestDeviceAdminLock.lock();
-        DeviceAdminHelper.requestPermission(MainActivity.this);
-      }
-    }).start();
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+
+    if (threadPoolExecutor != null) {
+      threadPoolExecutor.shutdownNow();
+      threadPoolExecutor = null;
+    }
   }
 
   @Override
@@ -81,15 +96,22 @@ public final class MainActivity extends Activity
   public void onClick(View view) {
     if (view.getId() == R.id.activity_main_button_front ||
             view.getId() == R.id.activity_main_button_back)
-      new Thread(new Runnable() {
+      threadPoolExecutor.execute(new Runnable() {
         @Override
         public void run() {
           Camera2APIHelper.automaticTakePhoto(MainActivity.this,
                   view.getId() == R.id.activity_main_button_back
-                  ?CameraCharacteristics.LENS_FACING_BACK
-                  :CameraCharacteristics.LENS_FACING_FRONT);
+                          ? CameraCharacteristics.LENS_FACING_BACK
+                          : CameraCharacteristics.LENS_FACING_FRONT);
         }
-      }).start();
+      });
+  }
+
+  private static ThreadPoolExecutor getThreadPoolExecutor() {
+    if (threadPoolExecutor == null)
+      threadPoolExecutor = new ThreadPoolExecutor(1, 5,
+              5, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1));
+    return threadPoolExecutor;
   }
 
   protected void checkUpdate() {

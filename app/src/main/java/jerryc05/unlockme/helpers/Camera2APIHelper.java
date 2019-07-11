@@ -133,7 +133,7 @@ public final class Camera2APIHelper {
   }
 
   public static void onRequestPermissionFinished(final MainActivity activity,
-                                                 int[] grantResults) {
+                                                 final int[] grantResults) {
     final boolean granted = grantResults.length > 0 &&
             grantResults[0] == PackageManager.PERMISSION_GRANTED;
     final String granted_str = granted
@@ -238,9 +238,6 @@ public final class Camera2APIHelper {
   }
 
   private static ImageReader getImageReader() {
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "getImageReader: ");
-
     if (mImageReader == null) {
       final StreamConfigurationMap streamConfigurationMap =
               mCameraCharacteristics.get(
@@ -256,7 +253,7 @@ public final class Camera2APIHelper {
               });
       mImageReader = ImageReader.newInstance(
               mCaptureSize.getWidth(), mCaptureSize.getHeight(),
-              ImageFormat.JPEG, 1);
+              ImageFormat.JPEG, 2);
       mImageReader.setOnImageAvailableListener(
               getOnImageAvailableListener(), null);
     }
@@ -264,7 +261,7 @@ public final class Camera2APIHelper {
   }
 
   private static CameraCaptureSession.StateCallback getCaptureStillImageStateCallback(
-          MainActivity activity) {
+          final MainActivity activity) {
     if (mStateCallback == null)
       mStateCallback = new CameraCaptureSession.StateCallback() {
         @Override
@@ -276,21 +273,10 @@ public final class Camera2APIHelper {
 //            cameraCaptureSession.setRepeatingRequest(
 //                    getPreviewCaptureRequest(activity), null, null);
 
-//            Handler handler=new Handler(Looper.getMainLooper());
-//            new Thread(new Runnable() {
-//              @Override
-//              public void run() {
-//                try {
-//                  Thread.sleep(500);
             cameraCaptureSession.abortCaptures();
             cameraCaptureSession.stopRepeating();
             cameraCaptureSession.capture(getStillImageCaptureRequest(activity),
                     getCaptureCallback(), null);
-//                } catch (Exception e) {
-//                  notifyExceptionToUI(e.toString(), null);
-//                }
-//              }
-//            }).start();
 
           } catch (final Exception e) {
             activity.alertExceptionToUI(e);
@@ -306,7 +292,7 @@ public final class Camera2APIHelper {
     return mStateCallback;
   }
 
-  protected static CaptureRequest getPreviewCaptureRequest(MainActivity activity)
+  protected static CaptureRequest getPreviewCaptureRequest(final MainActivity activity)
           throws CameraAccessException {
     CaptureRequest.Builder mCaptureRequestBuilder = mCameraDevice
             .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -317,27 +303,44 @@ public final class Camera2APIHelper {
     return mCaptureRequestBuilder.build();
   }
 
-  protected static CaptureRequest getStillImageCaptureRequest(MainActivity activity)
+  protected static CaptureRequest getStillImageCaptureRequest(final MainActivity activity)
           throws CameraAccessException {
     CaptureRequest.Builder mCaptureRequestBuilder = mCameraDevice
             .createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
     mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE,
             CameraMetadata.CONTROL_MODE_AUTO);
     mCaptureRequestBuilder.addTarget(getImageReader().getSurface());
+    final int currentRotation = activity.getWindowManager()
+            .getDefaultDisplay().getRotation();
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "getStillImageCaptureRequest: Orientation: " +
+              currentRotation);
+
     mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,
-            getOrientationsMap().get(activity.getWindowManager()
-                    .getDefaultDisplay().getRotation()));
+            (predefinedFacing == CameraCharacteristics.LENS_FACING_FRONT
+                    ? getFrontOrientationsMap()
+                    : getBackOrientationsMap()).get(currentRotation));
     return mCaptureRequestBuilder.build();
   }
 
   private static SparseIntArray getOrientationsMap() {
     if (orientationsMap == null) {
       orientationsMap = new SparseIntArray(4);
-      orientationsMap.append(Surface.ROTATION_0, 90);
       orientationsMap.append(Surface.ROTATION_90, 0);
-      orientationsMap.append(Surface.ROTATION_180, 270);
       orientationsMap.append(Surface.ROTATION_270, 180);
     }
+    return orientationsMap;
+  }
+
+  private static SparseIntArray getFrontOrientationsMap() {
+    getOrientationsMap().append(Surface.ROTATION_0, 270);
+    orientationsMap.append(Surface.ROTATION_180, 90);
+    return orientationsMap;
+  }
+
+  private static SparseIntArray getBackOrientationsMap() {
+    getOrientationsMap().append(Surface.ROTATION_0, 90);
+    orientationsMap.append(Surface.ROTATION_180, 270);
     return orientationsMap;
   }
 
@@ -378,14 +381,14 @@ public final class Camera2APIHelper {
   }
 
   protected static void saveImageToDisk(final byte[] bytes) {
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "saveImageToDisk: ");
-
     final String
             timeFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS",
             Locale.getDefault()).format(new Date()),
             dirName = Environment.getExternalStorageDirectory() + "/UnlockMe/",
             fileName = "UnlockMe_" + timeFormat + ".jpg";
+
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "saveImageToDisk: " + dirName + fileName);
     final File
             dir = new File(dirName),
             file = new File(dir, fileName);
@@ -423,19 +426,21 @@ public final class Camera2APIHelper {
   }
 
   @SuppressWarnings("SameParameterValue")
-  protected static void notifyExceptionToUI(String contentText, String subText) {
+  public static void notifyExceptionToUI(final String contentText,
+                                         final String subText) {
     notifyToUI("Crash Report", contentText, subText);
     throw new UnsupportedOperationException(contentText);
   }
 
-  private static void notifyToUI(String contentTitle, String contentText, String subText) {
+  public static void notifyToUI(final String contentTitle,
+                                final String contentText,
+                                final String subText) {
     final Notification.Builder builder = new Notification.Builder(
             MainActivity.applicationContext)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_shield_foreground)
             .setSubText(subText)
-            .setWhen(System.currentTimeMillis())
             .setShowWhen(true)
             .setStyle(new Notification.BigTextStyle()
                     .bigText(contentText));
@@ -444,6 +449,7 @@ public final class Camera2APIHelper {
             MainActivity.applicationContext.
                     getSystemService(NOTIFICATION_SERVICE);
     assert notificationManager != null;
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       final String CHANNEL_ID = "Crash Report";
       if (notificationManager.getNotificationChannel(CHANNEL_ID) == null) {
@@ -453,12 +459,15 @@ public final class Camera2APIHelper {
         mChannel.enableLights(true);
         mChannel.enableVibration(true);
         mChannel.setShowBadge(true);
+        mChannel.setImportance(NotificationManager.IMPORTANCE_HIGH);
         notificationManager.createNotificationChannel(mChannel);
       }
       builder
               .setChannelId(CHANNEL_ID)
               .setBadgeIconType(Notification.BADGE_ICON_LARGE);
-    }
+    } else
+      builder.setPriority(Notification.PRIORITY_HIGH);
+
     notificationManager.notify(-1, builder.build());
   }
 }
