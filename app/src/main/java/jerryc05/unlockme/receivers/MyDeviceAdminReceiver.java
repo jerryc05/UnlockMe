@@ -3,15 +3,18 @@ package jerryc05.unlockme.receivers;
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.camera2.CameraCharacteristics;
 import android.os.UserHandle;
 import android.util.Log;
 
 import jerryc05.unlockme.BuildConfig;
+import jerryc05.unlockme.MainActivity;
+import jerryc05.unlockme.helpers.Camera2APIHelper;
 
 @SuppressWarnings("NullableProblems")
-public class MyDAReceiver extends DeviceAdminReceiver {
+public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
-  private final static String TAG = MyDAReceiver.class.getSimpleName();
+  private final static String TAG = MyDeviceAdminReceiver.class.getSimpleName();
   private static       int    failedAttempt;
 
   @Override
@@ -20,6 +23,14 @@ public class MyDAReceiver extends DeviceAdminReceiver {
 
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onPasswordFailed: " + ++failedAttempt);
+    MainActivity.threadPoolExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        Camera2APIHelper.automaticTakePhoto(
+                MainActivity.weakMainActivity.get(),
+                CameraCharacteristics.LENS_FACING_FRONT);
+      }
+    });
   }
 
   @Override

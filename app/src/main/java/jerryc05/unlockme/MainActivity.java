@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +30,7 @@ public final class MainActivity extends Activity
 
   public        ReentrantLock      requestDeviceAdminLock;
   public static Context            applicationContext;
+  public static WeakReference<MainActivity> weakMainActivity;
   public static ThreadPoolExecutor threadPoolExecutor;
 
   @Override
@@ -40,6 +42,7 @@ public final class MainActivity extends Activity
       @Override
       public void run() {
         applicationContext = getApplicationContext();
+        weakMainActivity=new WeakReference<>(MainActivity.this);
         findViewById(R.id.activity_main_button_front)
                 .setOnClickListener(MainActivity.this);
         findViewById(R.id.activity_main_button_back)
@@ -49,19 +52,19 @@ public final class MainActivity extends Activity
     });
   }
 
-//  @Override
-//  protected void onStart() {
-//    super.onStart();
-//
-//    threadPoolExecutor.execute(new Runnable() {
-//      @Override
-//      public void run() {
-//        if (requestDeviceAdminLock != null)
-//          requestDeviceAdminLock.lock();
-//        DeviceAdminHelper.requestPermission(MainActivity.this);
-//      }
-//    });
-//  }
+  @Override
+  protected void onStart() {
+    super.onStart();
+
+    threadPoolExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        if (requestDeviceAdminLock != null)
+          requestDeviceAdminLock.lock();
+        DeviceAdminHelper.requestPermission(MainActivity.this);
+      }
+    });
+  }
 
 
   @Override

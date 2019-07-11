@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.MainActivity;
 import jerryc05.unlockme.R;
-import jerryc05.unlockme.receivers.MyDAReceiver;
+import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
 public final class DeviceAdminHelper {
 
@@ -36,7 +36,7 @@ public final class DeviceAdminHelper {
               activity.getSystemService(Context.DEVICE_POLICY_SERVICE));
     if (mComponentName == null)
       mComponentName =
-              new ComponentName(activity, MyDAReceiver.class);
+              new ComponentName(activity, MyDeviceAdminReceiver.class);
 
     if (!mDevicePolicyManager.isAdminActive(mComponentName)) {
       final Intent intentDeviceAdmin = new Intent(
