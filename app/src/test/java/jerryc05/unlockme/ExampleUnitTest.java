@@ -5,5 +5,5 @@ package jerryc05.unlockme;
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
-public class ExampleUnitTest {
+class ExampleUnitTest {
 }

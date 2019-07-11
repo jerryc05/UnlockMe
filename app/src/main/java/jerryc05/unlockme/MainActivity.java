@@ -2,6 +2,7 @@ package jerryc05.unlockme;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -18,11 +19,12 @@ import jerryc05.unlockme.helpers.URLConnectionBuilder;
 public final class MainActivity extends Activity
         implements View.OnClickListener {
 
-  public final static  int
-          REQUEST_CODE_CAMERA       = 0,
-          REQUEST_CODE_DEVICE_ADMIN = 1;
+  public final static int
+          REQUEST_CODE_DEVICE_ADMIN              = 0,
+          REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
-  public ReentrantLock requestDeviceAdminLock;
+  public        ReentrantLock requestDeviceAdminLock;
+  public static Context       applicationContext;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +34,7 @@ public final class MainActivity extends Activity
     new Thread(new Runnable() {
       @Override
       public void run() {
+        applicationContext = getApplicationContext();
         checkUpdate();
         findViewById(R.id.activity_main_button_takePhoto)
                 .setOnClickListener(MainActivity.this);
@@ -66,7 +69,7 @@ public final class MainActivity extends Activity
   public void onRequestPermissionsResult(int requestCode,
                                          String[] permissions,
                                          int[] grantResults) {
-    if (requestCode == REQUEST_CODE_CAMERA)
+    if (requestCode == REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL)
       Camera2APIHelper.onRequestPermissionFinished(
               this, grantResults);
   }
@@ -87,7 +90,7 @@ public final class MainActivity extends Activity
             keyword = "/jerryc05/UnlockMe/tree",
             URL = "https://www.github.com/jerryc05/UnlockMe/releases";
 
-    try (URLConnectionBuilder connectionBuilder = URLConnectionBuilder
+    try (final URLConnectionBuilder connectionBuilder = URLConnectionBuilder
             .get(URL)
             .setConnectTimeout(1000)
             .setReadTimeout(1000)
@@ -119,7 +122,7 @@ public final class MainActivity extends Activity
           }
         });
 
-    } catch (Exception e) {
+    } catch (final Exception e) {
       alertExceptionToUI(e);
     }
   }

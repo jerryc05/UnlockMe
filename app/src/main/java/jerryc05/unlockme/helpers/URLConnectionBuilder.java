@@ -106,8 +106,9 @@ public final class URLConnectionBuilder implements AutoCloseable {
 
       return result;
 
-    } catch (Exception e) {
-      Log.e(TAG, "connect: ", e);
+    } catch (final Exception e) {
+      if (BuildConfig.DEBUG)
+        Log.e(TAG, "connect: ", e);
       throw e;
     }
   }
@@ -131,8 +132,9 @@ public final class URLConnectionBuilder implements AutoCloseable {
       (isHTTP ? (HttpURLConnection) urlConnection
               : (HttpsURLConnection) urlConnection)
               .setRequestMethod(_requestMethod);
-    } catch (java.net.ProtocolException e) {
-      Log.e(TAG, "setRequestMethod: ", e);
+    } catch (final Exception e) {
+      if (BuildConfig.DEBUG)
+        Log.e(TAG, "setRequestMethod: ", e);
     }
     return this;
   }
