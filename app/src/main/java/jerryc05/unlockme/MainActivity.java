@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -36,7 +37,9 @@ public final class MainActivity extends Activity
       public void run() {
         applicationContext = getApplicationContext();
         checkUpdate();
-        findViewById(R.id.activity_main_button_takePhoto)
+        findViewById(R.id.activity_main_button_front)
+                .setOnClickListener(MainActivity.this);
+        findViewById(R.id.activity_main_button_back)
                 .setOnClickListener(MainActivity.this);
       }
     }).start();
@@ -76,11 +79,15 @@ public final class MainActivity extends Activity
 
   @Override
   public void onClick(View view) {
-    if (view.getId() == R.id.activity_main_button_takePhoto)
+    if (view.getId() == R.id.activity_main_button_front ||
+            view.getId() == R.id.activity_main_button_back)
       new Thread(new Runnable() {
         @Override
         public void run() {
-          Camera2APIHelper.automaticTakePhoto(MainActivity.this);
+          Camera2APIHelper.automaticTakePhoto(MainActivity.this,
+                  view.getId() == R.id.activity_main_button_back
+                  ?CameraCharacteristics.LENS_FACING_BACK
+                  :CameraCharacteristics.LENS_FACING_FRONT);
         }
       }).start();
   }

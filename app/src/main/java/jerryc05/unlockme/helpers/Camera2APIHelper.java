@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -49,6 +50,7 @@ public final class Camera2APIHelper {
 
   static final     String                               TAG =
           Camera2APIHelper.class.getSimpleName();
+  private static   int                                  predefinedFacing;
   private static   String[]                             permissions;
   protected static String                               cameraID;
   protected static CameraManager                        mCameraManager;
@@ -60,11 +62,12 @@ public final class Camera2APIHelper {
   protected static DialogInterface.OnClickListener      requestPermissionRationaleOnClickListener;
   private static   ImageReader                          mImageReader;
   private static   CameraCaptureSession.CaptureCallback mCaptureCallback;
-  private static   CaptureRequest.Builder               mCaptureRequestBuilder;
   private static   ImageReader.OnImageAvailableListener onImageAvailableListener;
   private static   CameraCaptureSession.StateCallback   mStateCallback;
 
-  public static void automaticTakePhoto(final MainActivity activity) {
+  public static void automaticTakePhoto(final MainActivity activity,
+                                        final int _facing) {
+    predefinedFacing = _facing;
     if (requestPermissions(activity)) {
       setupCamera2(activity);
       openCamera2AndCapture(activity);
@@ -138,7 +141,8 @@ public final class Camera2APIHelper {
             : "Camera or Write External Storage Permissions Denied ×";
 
     Toast.makeText(activity, granted_str, Toast.LENGTH_SHORT).show();
-    if (granted) Camera2APIHelper.automaticTakePhoto(activity);
+    if (granted)
+      Camera2APIHelper.automaticTakePhoto(activity, predefinedFacing);
   }
 
   private static void setupCamera2(final MainActivity activity) {
@@ -163,8 +167,7 @@ public final class Camera2APIHelper {
 
         final Integer FACING = eachCameraCharacteristics.get(
                 CameraCharacteristics.LENS_FACING);
-        if (FACING != null &&
-                FACING == CameraCharacteristics.LENS_FACING_FRONT) {
+        if (FACING != null && FACING == predefinedFacing) {
           cameraID = eachCameraID;
           mCameraCharacteristics = eachCameraCharacteristics;
           break;
@@ -226,12 +229,9 @@ public final class Camera2APIHelper {
       activity.alertExceptionToUI(new UnsupportedOperationException(
               "captureStillImage() found null camera device!"));
     try {
-      if (BuildConfig.DEBUG)
-        Log.d(TAG, "captureStillImage: ");
       mCameraDevice.createCaptureSession(Collections.singletonList(
               getImageReader().getSurface()),
-              getCaptureStillImageStateCallback(activity)
-              , null);
+              getCaptureStillImageStateCallback(activity), null);
     } catch (final CameraAccessException e) {
       activity.alertExceptionToUI(e);
     }
@@ -273,9 +273,26 @@ public final class Camera2APIHelper {
             Log.d(TAG, "mCaptureStillImageStateCallback#onConfigured: ");
           try {
             mCameraCaptureSession = cameraCaptureSession;
-            cameraCaptureSession.capture(getCaptureRequest(activity),
+//            cameraCaptureSession.setRepeatingRequest(
+//                    getPreviewCaptureRequest(activity), null, null);
+
+//            Handler handler=new Handler(Looper.getMainLooper());
+//            new Thread(new Runnable() {
+//              @Override
+//              public void run() {
+//                try {
+//                  Thread.sleep(500);
+            cameraCaptureSession.abortCaptures();
+            cameraCaptureSession.stopRepeating();
+            cameraCaptureSession.capture(getStillImageCaptureRequest(activity),
                     getCaptureCallback(), null);
-          } catch (final CameraAccessException e) {
+//                } catch (Exception e) {
+//                  notifyExceptionToUI(e.toString(), null);
+//                }
+//              }
+//            }).start();
+
+          } catch (final Exception e) {
             activity.alertExceptionToUI(e);
           }
         }
@@ -289,15 +306,24 @@ public final class Camera2APIHelper {
     return mStateCallback;
   }
 
-  protected static CaptureRequest getCaptureRequest(MainActivity activity)
+  protected static CaptureRequest getPreviewCaptureRequest(MainActivity activity)
           throws CameraAccessException {
-    if (mCaptureRequestBuilder == null) {
-      mCaptureRequestBuilder = mCameraDevice.createCaptureRequest(
-              CameraDevice.TEMPLATE_STILL_CAPTURE);
-      mCaptureRequestBuilder.addTarget(getImageReader().getSurface());
-      mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE,
-              CameraMetadata.CONTROL_MODE_AUTO);
-    }
+    CaptureRequest.Builder mCaptureRequestBuilder = mCameraDevice
+            .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+    mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE,
+            CameraMetadata.CONTROL_MODE_AUTO);
+    mCaptureRequestBuilder.addTarget(ImageReader.newInstance(
+            1, 1, ImageFormat.JPEG, 50).getSurface());
+    return mCaptureRequestBuilder.build();
+  }
+
+  protected static CaptureRequest getStillImageCaptureRequest(MainActivity activity)
+          throws CameraAccessException {
+    CaptureRequest.Builder mCaptureRequestBuilder = mCameraDevice
+            .createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+    mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE,
+            CameraMetadata.CONTROL_MODE_AUTO);
+    mCaptureRequestBuilder.addTarget(getImageReader().getSurface());
     mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,
             getOrientationsMap().get(activity.getWindowManager()
                     .getDefaultDisplay().getRotation()));
@@ -355,15 +381,22 @@ public final class Camera2APIHelper {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "saveImageToDisk: ");
 
-    final String timeFormat = new SimpleDateFormat(
-            "yyyy-MM-dd_HH_mm_ss", Locale.getDefault())
-            .format(new Date());
-    final File file = new File(Environment.getExternalStorageDirectory() +
-            "/UnlockMe/UnlockMe_" + timeFormat + ".jpg");
+    final String
+            timeFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS",
+            Locale.getDefault()).format(new Date()),
+            dirName = Environment.getExternalStorageDirectory() + "/UnlockMe/",
+            fileName = "UnlockMe_" + timeFormat + ".jpg";
+    final File
+            dir = new File(dirName),
+            file = new File(dir, fileName);
+
+    if (!dir.isDirectory() && !dir.mkdirs())
+      notifyExceptionToUI("Cannot create path " + fileName,
+              "saveImageToDisk()");
+
     try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
       fileOutputStream.write(bytes);
-      notifyToUI("Picture Taken", "Picture taken successfully",
-              timeFormat);
+      notifyToUI("Picture Taken", fileName, null);
     } catch (final Exception e) {
       if (BuildConfig.DEBUG)
         Log.e(TAG, "saveImageToDisk: ", e);
@@ -390,8 +423,9 @@ public final class Camera2APIHelper {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private static void notifyExceptionToUI(String contentText, String subText) {
+  protected static void notifyExceptionToUI(String contentText, String subText) {
     notifyToUI("Crash Report", contentText, subText);
+    throw new UnsupportedOperationException(contentText);
   }
 
   private static void notifyToUI(String contentTitle, String contentText, String subText) {
@@ -399,13 +433,32 @@ public final class Camera2APIHelper {
             MainActivity.applicationContext)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
-            .setSubText(subText);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-      builder.setChannelId("Crash Report");
+            .setSmallIcon(R.drawable.ic_launcher_shield_foreground)
+            .setSubText(subText)
+            .setWhen(System.currentTimeMillis())
+            .setShowWhen(true)
+            .setStyle(new Notification.BigTextStyle()
+                    .bigText(contentText));
+
     NotificationManager notificationManager = (NotificationManager)
             MainActivity.applicationContext.
                     getSystemService(NOTIFICATION_SERVICE);
     assert notificationManager != null;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      final String CHANNEL_ID = "Crash Report";
+      if (notificationManager.getNotificationChannel(CHANNEL_ID) == null) {
+        NotificationChannel mChannel = new NotificationChannel(
+                CHANNEL_ID, CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);
+        mChannel.setDescription("Crash report notification channel for UnlockMe");
+        mChannel.enableLights(true);
+        mChannel.enableVibration(true);
+        mChannel.setShowBadge(true);
+        notificationManager.createNotificationChannel(mChannel);
+      }
+      builder
+              .setChannelId(CHANNEL_ID)
+              .setBadgeIconType(Notification.BADGE_ICON_LARGE);
+    }
     notificationManager.notify(-1, builder.build());
   }
 }
