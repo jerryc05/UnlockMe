@@ -1,6 +1,7 @@
 package jerryc05.unlockme.helpers.camera;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,7 +12,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -130,7 +130,7 @@ public abstract class CameraBaseAPIClass {
     if (requestPermissionRationaleOnClickListener == null)
       requestPermissionRationaleOnClickListener =
               new DialogInterface.OnClickListener() {
-                @RequiresApi(api = Build.VERSION_CODES.M)
+                @SuppressLint("NewApi")
                 @Override
                 public void onClick(DialogInterface dialogInterface,
                                     int i) {
@@ -161,6 +161,7 @@ public abstract class CameraBaseAPIClass {
   }
 
   static void saveImageToDisk(final byte[] data) {
+    //noinspection SpellCheckingInspection
     final String
             timeFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS",
             Locale.getDefault()).format(new Date()),

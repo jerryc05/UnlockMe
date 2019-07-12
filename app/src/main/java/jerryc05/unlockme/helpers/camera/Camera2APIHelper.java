@@ -15,14 +15,11 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
-import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
-
-import androidx.annotation.RequiresApi;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -34,7 +31,7 @@ import jerryc05.unlockme.MainActivity;
 import jerryc05.unlockme.helpers.UserInterface;
 
 @SuppressWarnings({"NullableProblems", "WeakerAccess"})
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+@SuppressLint("NewApi")
 abstract class Camera2APIHelper extends CameraBaseAPIClass {
 
   static final   String                               TAG =
