@@ -7,8 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -24,6 +22,8 @@ import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
+
+import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 
 @SuppressWarnings("NullableProblems")
 public final class MainActivity extends Activity
@@ -43,32 +43,29 @@ public final class MainActivity extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    getThreadPoolExecutor().execute(new Runnable() {
-      @Override
-      public void run() {
-        applicationContext = getApplicationContext();
-        weakMainActivity = new WeakReference<>(MainActivity.this);
-        findViewById(R.id.activity_main_button_front)
-                .setOnClickListener(MainActivity.this);
-        findViewById(R.id.activity_main_button_back)
-                .setOnClickListener(MainActivity.this);
-        ((CheckBox) findViewById(R.id.activity_main_api1CheckBox))
-                .setOnCheckedChangeListener(MainActivity.this);
-        checkUpdate();
-      }
-    });
+    applicationContext = getApplicationContext();
+    weakMainActivity = new WeakReference<>(MainActivity.this);
+    findViewById(R.id.activity_main_button_front)
+            .setOnClickListener(MainActivity.this);
+    findViewById(R.id.activity_main_button_back)
+            .setOnClickListener(MainActivity.this);
+    final CheckBox forceAPI1 =
+          findViewById(R.id.activity_main_api1CheckBox);
+    forceAPI1.setOnCheckedChangeListener(MainActivity.this);
+    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2());
   }
 
   @Override
   protected void onStart() {
     super.onStart();
 
-    threadPoolExecutor.execute(new Runnable() {
+    getThreadPoolExecutor().execute(new Runnable() {
       @Override
       public void run() {
         if (requestDeviceAdminLock != null)
           requestDeviceAdminLock.lock();
         DeviceAdminHelper.requestPermission(MainActivity.this);
+        checkUpdate();
       }
     });
   }
@@ -114,7 +111,10 @@ public final class MainActivity extends Activity
   @Override
   public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
     if (compoundButton.getId() == R.id.activity_main_api1CheckBox)
-      CameraBaseAPIClass.preferCamera2 = !b;
+      getSharedPreferences(CameraBaseAPIClass.SP_NAME_CAMERA,
+              Context.MODE_PRIVATE).edit()
+              .putBoolean(SP_KEY_PREFER_CAMERA_API_2, !b)
+              .apply();
   }
 
   private static ThreadPoolExecutor getThreadPoolExecutor() {

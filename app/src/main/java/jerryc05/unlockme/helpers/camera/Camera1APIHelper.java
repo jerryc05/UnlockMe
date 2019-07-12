@@ -1,21 +1,24 @@
 package jerryc05.unlockme.helpers.camera;
 
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Build;
-import android.view.SurfaceView;
+import android.util.Log;
 
-import jerryc05.unlockme.MainActivity;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import jerryc05.unlockme.helpers.UserInterface;
 
 abstract class Camera1APIHelper extends CameraBaseAPIClass {
 
-  private static int                      predefinedFacing;
-  private static int                      cameraID;
-  private static Camera                   mCamera;
-  private static Camera.PictureCallback   mJpegPictureCallback;
-  private static Camera.AutoFocusCallback mAutofocusCallback;
+  private static int                    predefinedFacing;
+  private static int                    cameraID;
+  private static Camera                 mCamera;
+  private static Camera.PictureCallback mJpegPictureCallback;
 
-  static void getImage( final int facing) {
+  static void getImage(final int facing) {
     predefinedFacing = facing;
     setupCamera1();
     openCamera1();
@@ -40,6 +43,19 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
       mCamera = Camera.open(cameraID);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
         mCamera.enableShutterSound(false);
+
+//      final Camera.Parameters mCameraParameters = mCamera.getParameters();
+//      final List<Camera.Size> sizes             = mCameraParameters.getSupportedPictureSizes();
+//      final Camera.Size mSize = Collections.max(sizes, new Comparator<Camera.Size>() {
+//        @Override
+//        public int compare(Camera.Size prev, Camera.Size next) {
+//          final int width = prev.width - next.width;
+//          return width != 0 ? width
+//                  : prev.height - next.height;
+//        }
+//      });
+//      mCameraParameters.setPictureSize(mSize.width, mSize.height);
+//      mCamera.setParameters(mCameraParameters);
     } catch (Exception e) {
       UserInterface.showExceptionToNotification(
               e.toString(), "openCamera1()");
@@ -48,35 +64,15 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
 
   private static void captureCamera1() {
     try {
-      mCamera.setPreviewDisplay(new SurfaceView(
-              MainActivity.applicationContext).getHolder());
-      mCamera.setPreviewCallback(new Camera.PreviewCallback() {
-        @Override
-        public void onPreviewFrame(byte[] bytes, Camera camera) {
-
-        }
-      });
+      mCamera.setPreviewTexture(new SurfaceTexture(-1));
       mCamera.startPreview();
-      mCamera.autoFocus(getAutofocusCallback());
+      mCamera.takePicture(null, null, getJpegPictureCallback());
+
     } catch (Exception e) {
+      closeCamera1(mCamera);
       UserInterface.showExceptionToNotification(
               e.toString(), "captureCamera1()");
     }
-  }
-
-  private static Camera.AutoFocusCallback getAutofocusCallback() {
-    if (mAutofocusCallback == null)
-      mAutofocusCallback = new Camera.AutoFocusCallback() {
-        @Override
-        public void onAutoFocus(boolean b, Camera camera) {
-          if (b)
-            camera.takePicture(null, null, getJpegPictureCallback());
-          else
-            UserInterface.showExceptionToNotification(
-                    "Autofocus failed!", "getAutofocusCallback()");
-        }
-      };
-    return mAutofocusCallback;
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -85,11 +81,17 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
       mJpegPictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-          camera.stopPreview();
-          camera.release();
+          closeCamera1(camera);
           saveImageToDisk(data);
         }
       };
     return mJpegPictureCallback;
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  static void closeCamera1(Camera camera) {
+    camera.stopPreview();
+    camera.release();
+    mCamera = null;
   }
 }

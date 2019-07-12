@@ -94,10 +94,27 @@ public abstract class UserInterface {
             false).build());
   }
 
+  @SuppressWarnings("unused")
+  public static void notifyToUI(final String title,
+                                final String contentText) {
+    final Notification.Builder builder = new Notification.Builder(
+            MainActivity.applicationContext)
+            .setContentTitle(title)
+            .setContentText(contentText)
+            .setSmallIcon(R.drawable.ic_launcher_shield_foreground);
+
+    getNotificationManager().notify(-1, setNotificationChannel(builder,
+            getNotificationManager(),
+            "UnlockMe Notification Channel",
+            "Regular notification channel for UnlockMe",
+            true).build());
+  }
+
   private static Notification.Builder setNotificationChannel(
           final Notification.Builder builder,
           final NotificationManager notificationManager,
-          final String channelID, final String desc, final boolean vibration) {
+          final String channelID, final String desc,
+          final boolean enableVibrationAndSound) {
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -106,9 +123,13 @@ public abstract class UserInterface {
                   channelID, channelID, NotificationManager.IMPORTANCE_DEFAULT);
           notificationChannel.setDescription(desc);
           notificationChannel.enableLights(true);
-          notificationChannel.enableVibration(vibration);
           notificationChannel.setShowBadge(true);
+          if (!enableVibrationAndSound) {
+            notificationChannel.enableVibration(false);
+            notificationChannel.setSound(null, null);
+          }
           notificationChannel.setImportance(NotificationManager.IMPORTANCE_HIGH);
+
           notificationManager.createNotificationChannel(notificationChannel);
         }
         builder

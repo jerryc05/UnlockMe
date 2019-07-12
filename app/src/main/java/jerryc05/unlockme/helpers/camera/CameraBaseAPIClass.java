@@ -2,6 +2,7 @@ package jerryc05.unlockme.helpers.camera;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
@@ -24,18 +25,29 @@ import jerryc05.unlockme.helpers.UserInterface;
 
 public abstract class CameraBaseAPIClass {
 
-  public static  boolean                         preferCamera2 =
+  public static final String
+          SP_NAME_CAMERA             = "CAMERA",
+          SP_KEY_PREFER_CAMERA_API_2 = "prefer_camera_api_2";
+
+  private static final boolean  canUseCamera2 =
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-  private static String[]                        permissions;
-  private static DialogInterface.OnClickListener requestPermissionRationaleOnClickListener;
+  private static       String[] permissions;
+  private static       DialogInterface.OnClickListener
+                                requestPermissionRationaleOnClickListener;
 
   @SuppressWarnings("unused")
   public static void getImageFromDefaultCamera(final MainActivity activity,
                                                final boolean isFront) {
-    if (preferCamera2)
+    if (getPreferCamera2() && canUseCamera2)
       getImageFromCamera2(activity, isFront);
     else
       getImageFromCamera1(activity, isFront);
+  }
+
+  public static boolean getPreferCamera2() {
+    return MainActivity.applicationContext.getSharedPreferences(
+            SP_NAME_CAMERA, Context.MODE_PRIVATE)
+            .getBoolean(SP_KEY_PREFER_CAMERA_API_2, true);
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -59,7 +71,7 @@ public abstract class CameraBaseAPIClass {
     }
 
     requestPermissions(activity);
-    Camera2APIHelper.getImage( isFront
+    Camera2APIHelper.getImage(isFront
             ? CameraCharacteristics.LENS_FACING_FRONT
             : CameraCharacteristics.LENS_FACING_BACK);
   }

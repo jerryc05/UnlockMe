@@ -47,7 +47,6 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
   static         CameraCaptureSession                 mCameraCaptureSession;
   static         CameraDevice.StateCallback           openCameraStateCallback;
   private static SparseIntArray                       orientationsMap;
-  private static ImageReader                          previewImageReader;
   private static ImageReader                          mImageReader;
   private static CameraCaptureSession.CaptureCallback mCaptureCallback;
   private static ImageReader.OnImageAvailableListener onImageAvailableListener;
@@ -104,7 +103,6 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
 
         @Override
         public void onOpened(CameraDevice cameraDevice) {
-          Log.d(TAG, "onOpened: " + Thread.currentThread().getId());
           mCameraDevice = cameraDevice;
           captureStillImage();
         }
@@ -127,9 +125,6 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
 
   @SuppressLint("MissingPermission")
   private static void openCamera2AndCapture() {
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "openCamera2AndCapture: ");
-
     final MainActivity activity = MainActivity.weakMainActivity.get();
     if (activity == null || requestPermissions(activity))
       try {
@@ -155,13 +150,6 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
       UserInterface.showExceptionToNotification(e.toString(),
               "captureStillImage()");
     }
-  }
-
-  static ImageReader getPreviewImageReader() {
-    if (previewImageReader == null)
-      previewImageReader = ImageReader.newInstance(20, 30,
-              ImageFormat.JPEG, 1);
-    return previewImageReader;
   }
 
   static ImageReader getCaptureImageReader() {
