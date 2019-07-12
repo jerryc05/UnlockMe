@@ -6,39 +6,27 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.util.Log;
 
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.MainActivity;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
-public final class DeviceAdminHelper {
+public abstract class DeviceAdminHelper {
 
-  private static final String TAG          =
-          DeviceAdminHelper.class.getSimpleName(),
-          deviceAdminPermissionExplanation =
-                  "We need DEVICE ADMIN permission to work properly.";
-  private static DevicePolicyManager             mDevicePolicyManager;
-  private static ComponentName                   mComponentName;
-  private static DialogInterface.OnClickListener onClickListener;
+  private static final String        deviceAdminPermissionExplanation =
+          "We need DEVICE ADMIN permission to work properly.";
+  private static       ComponentName mComponentName;
 
   public static void requestPermission(MainActivity activity) {
     if (activity.requestDeviceAdminLock != null) {
       activity.requestDeviceAdminLock.unlock();
       activity.requestDeviceAdminLock = null;
     }
-    if (mDevicePolicyManager == null)
-      mDevicePolicyManager = (DevicePolicyManager) Objects.requireNonNull(
-              activity.getSystemService(Context.DEVICE_POLICY_SERVICE));
-    if (mComponentName == null)
-      mComponentName =
-              new ComponentName(activity, MyDeviceAdminReceiver.class);
 
-    if (!mDevicePolicyManager.isAdminActive(mComponentName)) {
+    if (!getDevicePolicyManager().isAdminActive(getComponentName())) {
       final Intent intentDeviceAdmin = new Intent(
               DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
       intentDeviceAdmin.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
@@ -53,25 +41,24 @@ public final class DeviceAdminHelper {
                   MainActivity.REQUEST_CODE_DEVICE_ADMIN);
         }
       });
-    } else if (BuildConfig.DEBUG)
-      Log.d(TAG, "requestPermission: DA is activated!");
+    } else
+      mComponentName = null;
   }
 
   public static void onRequestPermissionFinished(MainActivity activity) {
-
-    if (!mDevicePolicyManager.isAdminActive(mComponentName)) {
+    if (!getDevicePolicyManager().isAdminActive(getComponentName())) {
       if (activity.requestDeviceAdminLock == null)
         activity.requestDeviceAdminLock = new ReentrantLock();
       activity.requestDeviceAdminLock.lock();
 
-      if (onClickListener == null)
-        onClickListener = new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialogInterface, int i) {
-            if (i == DialogInterface.BUTTON_POSITIVE)
-              System.exit(1);
-          }
-        };
+      final DialogInterface.OnClickListener onClickListener =
+              new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                  if (i == DialogInterface.BUTTON_POSITIVE)
+                    System.exit(1);
+                }
+              };
 
       new AlertDialog.Builder(activity)
               .setTitle("Permission Required")
@@ -80,6 +67,20 @@ public final class DeviceAdminHelper {
               .setCancelable(false)
               .setPositiveButton("OK", onClickListener)
               .show();
-    }
+    } else
+      mComponentName = null;
+  }
+
+  private static DevicePolicyManager getDevicePolicyManager() {
+    return (DevicePolicyManager) Objects.requireNonNull(
+            MainActivity.applicationContext
+                    .getSystemService(Context.DEVICE_POLICY_SERVICE));
+  }
+
+  private static ComponentName getComponentName() {
+    if (mComponentName == null)
+      mComponentName = new ComponentName(
+              MainActivity.applicationContext, MyDeviceAdminReceiver.class);
+    return mComponentName;
   }
 }

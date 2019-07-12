@@ -19,11 +19,11 @@ public abstract class UserInterface {
   private static NotificationManager notificationManager;
 
   @SuppressWarnings("unused")
-  public static void throwExceptionToDialog(final Activity activity, final Exception e) {
+  public static void showExceptionToDialog(final Activity activity, final Exception e) {
     if (activity == null)
       return;
 
-    throwExceptionToDialog(activity, e, new DialogInterface.OnClickListener() {
+    showExceptionToDialog(activity, e, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialogInterface, int i) {
         throw new UnsupportedOperationException(e);
@@ -32,8 +32,8 @@ public abstract class UserInterface {
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void throwExceptionToDialog(final Activity activity, final Exception e,
-                                            final DialogInterface.OnClickListener onClickListener) {
+  public static void showExceptionToDialog(final Activity activity, final Exception e,
+                                           final DialogInterface.OnClickListener onClickListener) {
     if (activity == null)
       return;
 
@@ -51,8 +51,14 @@ public abstract class UserInterface {
     });
   }
 
-  public static void throwExceptionToNotification(final String contentText,
-                                                  final String subText) {
+  public static void showExceptionToNotification(final String contentText,
+                                                 final String subText) {
+    showExceptionToNotificationNoRethrow(contentText, subText);
+    throw new UnsupportedOperationException(contentText);
+  }
+
+  public static void showExceptionToNotificationNoRethrow(final String contentText,
+                                                          final String subText) {
     final Notification.Builder builder = new Notification.Builder(
             MainActivity.applicationContext)
             .setContentTitle("Crash Report")
@@ -62,13 +68,11 @@ public abstract class UserInterface {
             .setStyle(new Notification.BigTextStyle()
                     .bigText(contentText));
 
-    notificationManager.notify(-1, setNotificationChannel(builder,
+    getNotificationManager().notify(-1, setNotificationChannel(builder,
             getNotificationManager(),
             "Crash Report",
             "Crash report notification channel for UnlockMe",
             true).build());
-
-    throw new UnsupportedOperationException(contentText);
   }
 
   @SuppressWarnings("unused")

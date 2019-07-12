@@ -7,10 +7,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 
 import java.lang.ref.WeakReference;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,7 +27,7 @@ import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 
 @SuppressWarnings("NullableProblems")
 public final class MainActivity extends Activity
-        implements View.OnClickListener {
+        implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
   public final static int
           REQUEST_CODE_DEVICE_ADMIN              = 0,
@@ -44,9 +49,11 @@ public final class MainActivity extends Activity
         applicationContext = getApplicationContext();
         weakMainActivity = new WeakReference<>(MainActivity.this);
         findViewById(R.id.activity_main_button_front)
-                .setOnClickListener(weakMainActivity.get());
+                .setOnClickListener(MainActivity.this);
         findViewById(R.id.activity_main_button_back)
-                .setOnClickListener(weakMainActivity.get());
+                .setOnClickListener(MainActivity.this);
+        ((CheckBox) findViewById(R.id.activity_main_api1CheckBox))
+                .setOnCheckedChangeListener(MainActivity.this);
         checkUpdate();
       }
     });
@@ -61,11 +68,10 @@ public final class MainActivity extends Activity
       public void run() {
         if (requestDeviceAdminLock != null)
           requestDeviceAdminLock.lock();
-        DeviceAdminHelper.requestPermission(weakMainActivity.get());
+        DeviceAdminHelper.requestPermission(MainActivity.this);
       }
     });
   }
-
 
   @Override
   protected void onDestroy() {
@@ -83,7 +89,7 @@ public final class MainActivity extends Activity
     super.onActivityResult(requestCode, resultCode, data);
 
     if (requestCode == REQUEST_CODE_DEVICE_ADMIN)
-      DeviceAdminHelper.onRequestPermissionFinished(weakMainActivity.get());
+      DeviceAdminHelper.onRequestPermissionFinished(this);
   }
 
   @Override
@@ -91,27 +97,45 @@ public final class MainActivity extends Activity
                                          String[] permissions,
                                          int[] grantResults) {
     if (requestCode == REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL)
-      CameraBaseAPIClass.onRequestPermissionFinished(
-              weakMainActivity.get(), grantResults);
+      CameraBaseAPIClass.onRequestPermissionFinished(this, grantResults);
   }
 
   @Override
   public void onClick(View view) {
-    if (view.getId() == R.id.activity_main_button_front ||
-            view.getId() == R.id.activity_main_button_back)
-      threadPoolExecutor.execute(new Runnable() {
-        @Override
-        public void run() {
-          CameraBaseAPIClass.getImageFromDefaultCamera(weakMainActivity.get(),
-                  view.getId() == R.id.activity_main_button_front);
-        }
-      });
+    threadPoolExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        CameraBaseAPIClass.getImageFromDefaultCamera(MainActivity.this,
+                view.getId() == R.id.activity_main_button_front);
+      }
+    });
+  }
+
+  @Override
+  public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+    if (compoundButton.getId() == R.id.activity_main_api1CheckBox)
+      CameraBaseAPIClass.preferCamera2 = !b;
   }
 
   private static ThreadPoolExecutor getThreadPoolExecutor() {
-    if (threadPoolExecutor == null)
-      threadPoolExecutor = new ThreadPoolExecutor(1, 5,
-              5, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1));
+    if (threadPoolExecutor == null) {
+      RejectedExecutionHandler rejectedExecutionHandler
+              = new RejectedExecutionHandler() {
+        @Override
+        public void rejectedExecution(Runnable runnable,
+                                      ThreadPoolExecutor threadPoolExecutor) {
+          UserInterface.showExceptionToNotificationNoRethrow(
+                  "ThreadPoolExecutor：\n>>> " + threadPoolExecutor.toString()
+                          + "\non MainActivity rejected:\n >>> " + runnable.toString(),
+                  "threadPoolExecutor#rejectedExecution()");
+        }
+      };
+      final int processorCount = Runtime.getRuntime().availableProcessors();
+      threadPoolExecutor = new ThreadPoolExecutor(processorCount,
+              2 * processorCount, 5, TimeUnit.SECONDS,
+              new LinkedBlockingQueue<>(1), rejectedExecutionHandler);
+      threadPoolExecutor.allowCoreThreadTimeOut(true);
+    }
     return threadPoolExecutor;
   }
 
@@ -134,7 +158,7 @@ public final class MainActivity extends Activity
         runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            new AlertDialog.Builder(weakMainActivity.get())
+            new AlertDialog.Builder(MainActivity.this)
                     .setTitle("New Version Available")
                     .setMessage("Do you want to upgrade from\n" +
                             BuildConfig.VERSION_NAME + "  to  " + latest + '?')
@@ -153,7 +177,8 @@ public final class MainActivity extends Activity
         });
 
     } catch (final Exception e) {
-      UserInterface.throwExceptionToDialog(weakMainActivity.get(), e);
+      UserInterface.showExceptionToNotificationNoRethrow(
+              e.toString(), "checkUpdate()");
     }
   }
 }

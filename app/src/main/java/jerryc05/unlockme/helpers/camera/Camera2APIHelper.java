@@ -1,6 +1,7 @@
 package jerryc05.unlockme.helpers.camera;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
@@ -15,7 +16,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
-import android.os.Environment;
+import android.os.Looper;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -23,15 +24,10 @@ import android.view.Surface;
 
 import androidx.annotation.RequiresApi;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.Locale;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.MainActivity;
@@ -57,27 +53,26 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
   private static ImageReader.OnImageAvailableListener onImageAvailableListener;
   private static CameraCaptureSession.StateCallback   mStateCallback;
 
-  public static void getImage(final MainActivity activity, final int _facing) {
-    predefinedFacing = _facing;
-    if (requestPermissions(activity)) {
-      setupCamera2(activity);
-      openCamera2AndCapture(activity);
-    }
+  public static void getImage(final int facing) {
+    predefinedFacing = facing;
+    setupCamera2();
+    openCamera2AndCapture();
   }
 
-  private static void setupCamera2(final MainActivity activity) {
-    getCameraManager(activity);
-    getCameraIDAndCharacteristics(activity);
-    getOpenCameraStateCallback(activity);
+  private static void setupCamera2() {
+    getCameraManager();
+    getCameraIDAndCharacteristics();
+    getOpenCameraStateCallback();
   }
 
-  private static void getCameraManager(final MainActivity activity) {
+  private static void getCameraManager() {
     if (mCameraManager == null)
       mCameraManager = (CameraManager)
-              activity.getSystemService(Context.CAMERA_SERVICE);
+              MainActivity.applicationContext
+                      .getSystemService(Context.CAMERA_SERVICE);
   }
 
-  private static void getCameraIDAndCharacteristics(final MainActivity activity) {
+  private static void getCameraIDAndCharacteristics() {
     try {
       assert mCameraManager != null;
       for (String eachCameraID : mCameraManager.getCameraIdList()) {
@@ -94,22 +89,24 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
         }
       }
     } catch (final Exception e) {
-      UserInterface.throwExceptionToDialog(activity, e);
+      UserInterface.showExceptionToNotification(
+              e.toString(), "getCameraIDAndCharacteristics");
     }
     if (cameraID == null)
-      UserInterface.throwExceptionToDialog(activity,
-              new UnsupportedOperationException(
-                      "getCameraIDAndCharacteristics() cannot find Front Camera!"));
+      UserInterface.showExceptionToNotification(
+              "getCameraIDAndCharacteristics() cannot find Front Camera!",
+              "getCameraIDAndCharacteristics");
   }
 
-  private static void getOpenCameraStateCallback(final MainActivity activity) {
+  private static void getOpenCameraStateCallback() {
     if (openCameraStateCallback == null)
       openCameraStateCallback = new CameraDevice.StateCallback() {
 
         @Override
         public void onOpened(CameraDevice cameraDevice) {
+          Log.d(TAG, "onOpened: " + Thread.currentThread().getId());
           mCameraDevice = cameraDevice;
-          captureStillImage(activity);
+          captureStillImage();
         }
 
         @Override
@@ -121,42 +118,42 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
         @Override
         public void onError(CameraDevice cameraDevice, int error) {
           onDisconnected(cameraDevice);
-          UserInterface.throwExceptionToDialog(activity,
-                  new UnsupportedOperationException(
-                          "openCameraStateCallback#onError() returns error code: "
-                                  + error + '!'));
+          UserInterface.showExceptionToNotification(
+                  "openCameraStateCallback#onError() returns error code: "
+                          + error + '!', "onError()");
         }
       };
   }
 
-  private static void openCamera2AndCapture(final MainActivity activity) {
-    if (requestPermissions(activity))
-      activity.runOnUiThread(new Runnable() {
-        @SuppressLint("MissingPermission")
-        @Override
-        public void run() {
-          try {
-            if (BuildConfig.DEBUG)
-              Log.d(TAG, "openCamera2AndCapture: ");
-            mCameraManager.openCamera(cameraID, openCameraStateCallback, null);
-          } catch (final CameraAccessException e) {
-            UserInterface.throwExceptionToDialog(activity, e);
-          }
-        }
-      });
+  @SuppressLint("MissingPermission")
+  private static void openCamera2AndCapture() {
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "openCamera2AndCapture: ");
+
+    final MainActivity activity = MainActivity.weakMainActivity.get();
+    if (activity == null || requestPermissions(activity))
+      try {
+        Looper.prepare();
+        mCameraManager.openCamera(cameraID, openCameraStateCallback, null);
+        Looper.loop();
+      } catch (final Exception e) {
+        UserInterface.showExceptionToNotification(e.toString(),
+                "openCamera2AndCapture()");
+      }
   }
 
-  static void captureStillImage(final MainActivity activity) {
+  static void captureStillImage() {
     if (mCameraDevice == null)
-      UserInterface.throwExceptionToDialog(activity,
-              new UnsupportedOperationException(
-                      "captureStillImage() found null camera device!"));
+      UserInterface.showExceptionToNotification(
+              "captureStillImage() found null camera device!",
+              "captureStillImage()");
     try {
       mCameraDevice.createCaptureSession(Collections.singletonList(
               getCaptureImageReader().getSurface()),
-              getCaptureStillImageStateCallback(activity), null);
+              getCaptureStillImageStateCallback(), null);
     } catch (final CameraAccessException e) {
-      UserInterface.throwExceptionToDialog(activity, e);
+      UserInterface.showExceptionToNotification(e.toString(),
+              "captureStillImage()");
     }
   }
 
@@ -192,8 +189,7 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
     return mImageReader;
   }
 
-  private static CameraCaptureSession.StateCallback getCaptureStillImageStateCallback(
-          final MainActivity activity) {
+  private static CameraCaptureSession.StateCallback getCaptureStillImageStateCallback() {
     if (mStateCallback == null)
       mStateCallback = new CameraCaptureSession.StateCallback() {
         @Override
@@ -202,26 +198,28 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
             Log.d(TAG, "mCaptureStillImageStateCallback#onConfigured: ");
           try {
             mCameraCaptureSession = cameraCaptureSession;
-            cameraCaptureSession.capture(getStillImageCaptureRequest(activity),
-                    getCaptureCallback(activity), null);
+            cameraCaptureSession.capture(getStillImageCaptureRequest(),
+                    getCaptureCallback(), null);
 
           } catch (final Exception e) {
-            UserInterface.throwExceptionToDialog(activity, e);
+            UserInterface.showExceptionToNotification(e.toString(),
+                    "mCaptureStillImageStateCallback#onConfigured()");
           }
         }
 
         @Override
         public void onConfigureFailed(CameraCaptureSession session) {
-          UserInterface.throwExceptionToDialog(activity,
-                  new UnsupportedOperationException(
-                          "CameraCaptureSession#StateCallBack() returns onConfigureFailed()"));
+          UserInterface.showExceptionToNotification(
+                  "CameraCaptureSession#StateCallBack() returns " +
+                          "onConfigureFailed()",
+                  "mCaptureStillImageStateCallback#onConfigureFailed()")
+          ;
         }
       };
     return mStateCallback;
   }
 
-  static CaptureRequest getStillImageCaptureRequest(
-          final MainActivity activity)
+  static CaptureRequest getStillImageCaptureRequest()
           throws CameraAccessException {
     CaptureRequest.Builder mCaptureRequestBuilder = mCameraDevice
             .createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -242,11 +240,13 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
             CaptureRequest.CONTROL_AF_TRIGGER_START
     );
     mCaptureRequestBuilder.addTarget(getCaptureImageReader().getSurface());
-    mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,
-            (predefinedFacing == CameraCharacteristics.LENS_FACING_FRONT
-                    ? getFrontOrientationsMap()
-                    : getBackOrientationsMap()).get(
-                    activity.getWindowManager().getDefaultDisplay().getRotation()));
+    final Activity activity = MainActivity.weakMainActivity.get();
+    if (activity != null)
+      mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,
+              (predefinedFacing == CameraCharacteristics.LENS_FACING_FRONT
+                      ? getFrontOrientationsMap()
+                      : getBackOrientationsMap()).get(
+                      activity.getWindowManager().getDefaultDisplay().getRotation()));
 
     return mCaptureRequestBuilder.build();
   }
@@ -291,8 +291,7 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
     return onImageAvailableListener;
   }
 
-  static CameraCaptureSession.CaptureCallback getCaptureCallback(
-          MainActivity activity) {
+  static CameraCaptureSession.CaptureCallback getCaptureCallback() {
     if (mCaptureCallback == null)
       mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
@@ -330,40 +329,12 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
 //            session.capture(mCaptureRequestBuilder.build(),
 //                    null, null);
 //          } catch (Exception e) {
-//            UserInterface.throwExceptionToDialog(activity, e);
+//            UserInterface.showExceptionToDialog(activity, e);
 //          }
           closeCamera2();
         }
       };
     return mCaptureCallback;
-  }
-
-  static void saveImageToDisk(final byte[] bytes) {
-    final String
-            timeFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS",
-            Locale.getDefault()).format(new Date()),
-            dirName = Environment.getExternalStorageDirectory() + "/UnlockMe/",
-            fileName = "UnlockMe_" + timeFormat + ".jpg";
-
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "saveImageToDisk: " + dirName + fileName);
-
-    UserInterface.notifyPictureToUI(fileName, bytes);
-    final File
-            dir = new File(dirName),
-            file = new File(dir, fileName);
-
-    if (!dir.isDirectory() && !dir.mkdirs())
-      UserInterface.throwExceptionToNotification("Cannot create path " + fileName,
-              "saveImageToDisk()");
-
-    try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-      fileOutputStream.write(bytes);
-    } catch (final Exception e) {
-      if (BuildConfig.DEBUG)
-        Log.e(TAG, "saveImageToDisk: ", e);
-      UserInterface.throwExceptionToNotification(e.toString(), "saveImageToDisk()");
-    }
   }
 
   static void closeCamera2() {
