@@ -9,7 +9,7 @@ import android.util.Log;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.MainActivity;
-import jerryc05.unlockme.helpers.Camera2APIHelper;
+import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 
 @SuppressWarnings("NullableProblems")
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
@@ -26,9 +26,8 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
     MainActivity.threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
-        Camera2APIHelper.automaticTakePhoto(
-                MainActivity.weakMainActivity.get(),
-                CameraCharacteristics.LENS_FACING_FRONT);
+        CameraBaseAPIClass.getImageFromDefaultCamera(
+                MainActivity.weakMainActivity.get(),true);
       }
     });
   }

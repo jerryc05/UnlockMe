@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -16,9 +15,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jerryc05.unlockme.helpers.Camera2APIHelper;
 import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
+import jerryc05.unlockme.helpers.UserInterface;
+import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 
 @SuppressWarnings("NullableProblems")
 public final class MainActivity extends Activity
@@ -28,10 +28,10 @@ public final class MainActivity extends Activity
           REQUEST_CODE_DEVICE_ADMIN              = 0,
           REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
-  public        ReentrantLock      requestDeviceAdminLock;
-  public static Context            applicationContext;
+  public        ReentrantLock               requestDeviceAdminLock;
+  public static Context                     applicationContext;
   public static WeakReference<MainActivity> weakMainActivity;
-  public static ThreadPoolExecutor threadPoolExecutor;
+  public static ThreadPoolExecutor          threadPoolExecutor;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -42,11 +42,11 @@ public final class MainActivity extends Activity
       @Override
       public void run() {
         applicationContext = getApplicationContext();
-        weakMainActivity=new WeakReference<>(MainActivity.this);
+        weakMainActivity = new WeakReference<>(MainActivity.this);
         findViewById(R.id.activity_main_button_front)
-                .setOnClickListener(MainActivity.this);
+                .setOnClickListener(weakMainActivity.get());
         findViewById(R.id.activity_main_button_back)
-                .setOnClickListener(MainActivity.this);
+                .setOnClickListener(weakMainActivity.get());
         checkUpdate();
       }
     });
@@ -61,7 +61,7 @@ public final class MainActivity extends Activity
       public void run() {
         if (requestDeviceAdminLock != null)
           requestDeviceAdminLock.lock();
-        DeviceAdminHelper.requestPermission(MainActivity.this);
+        DeviceAdminHelper.requestPermission(weakMainActivity.get());
       }
     });
   }
@@ -83,7 +83,7 @@ public final class MainActivity extends Activity
     super.onActivityResult(requestCode, resultCode, data);
 
     if (requestCode == REQUEST_CODE_DEVICE_ADMIN)
-      DeviceAdminHelper.onRequestPermissionFinished(this);
+      DeviceAdminHelper.onRequestPermissionFinished(weakMainActivity.get());
   }
 
   @Override
@@ -91,8 +91,8 @@ public final class MainActivity extends Activity
                                          String[] permissions,
                                          int[] grantResults) {
     if (requestCode == REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL)
-      Camera2APIHelper.onRequestPermissionFinished(
-              this, grantResults);
+      CameraBaseAPIClass.onRequestPermissionFinished(
+              weakMainActivity.get(), grantResults);
   }
 
   @Override
@@ -102,10 +102,8 @@ public final class MainActivity extends Activity
       threadPoolExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          Camera2APIHelper.automaticTakePhoto(MainActivity.this,
-                  view.getId() == R.id.activity_main_button_back
-                          ? CameraCharacteristics.LENS_FACING_BACK
-                          : CameraCharacteristics.LENS_FACING_FRONT);
+          CameraBaseAPIClass.getImageFromDefaultCamera(weakMainActivity.get(),
+                  view.getId() == R.id.activity_main_button_front);
         }
       });
   }
@@ -117,7 +115,7 @@ public final class MainActivity extends Activity
     return threadPoolExecutor;
   }
 
-  protected void checkUpdate() {
+  void checkUpdate() {
     final String
             keyword = "/jerryc05/UnlockMe/tree",
             URL = "https://www.github.com/jerryc05/UnlockMe/releases";
@@ -136,7 +134,7 @@ public final class MainActivity extends Activity
         runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            new AlertDialog.Builder(MainActivity.this)
+            new AlertDialog.Builder(weakMainActivity.get())
                     .setTitle("New Version Available")
                     .setMessage("Do you want to upgrade from\n" +
                             BuildConfig.VERSION_NAME + "  to  " + latest + '?')
@@ -155,32 +153,7 @@ public final class MainActivity extends Activity
         });
 
     } catch (final Exception e) {
-      alertExceptionToUI(e);
+      UserInterface.throwExceptionToDialog(weakMainActivity.get(), e);
     }
-  }
-
-  public void alertExceptionToUI(Exception e) {
-    alertExceptionToUI(e, new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialogInterface, int i) {
-        throw new UnsupportedOperationException(e);
-      }
-    });
-  }
-
-  public void alertExceptionToUI(Exception e,
-                                 DialogInterface.OnClickListener onClickListener) {
-    runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Crash Report")
-                .setMessage(e.toString())
-                .setIcon(R.drawable.ic_round_error_24px)
-                .setCancelable(false)
-                .setPositiveButton("OK", onClickListener)
-                .show();
-      }
-    });
   }
 }
