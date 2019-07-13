@@ -4,21 +4,19 @@
     package="jerryc05.unlockme"
     tools:ignore="GoogleAppIndexingWarning">
 
-    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <uses-feature
         android:name="android.hardware.camera.front"
         android:required="true" />
-    <uses-feature
-        android:name="android.hardware.camera.autofocus"
-        android:required="false" />
 
     <application
         android:allowBackup="true"
         android:hardwareAccelerated="false"
-        android:icon="@mipmap/ic_launcher_shield"
+        android:icon="@mipmap/ic_launcher_smartphone_lock"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup">
@@ -29,7 +27,6 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -40,7 +37,6 @@
             <meta-data
                 android:name="android.app.device_admin"
                 android:resource="@xml/device_policy" />
-
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
                 <action android:name="android.app.action.DEVICE_ADMIN_DISABLE_REQUESTED" />
@@ -48,5 +44,4 @@
             </intent-filter>
         </receiver>
     </application>
-
 </manifest>

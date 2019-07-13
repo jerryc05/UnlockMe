@@ -12,6 +12,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
 import java.lang.ref.WeakReference;
+import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -50,7 +51,7 @@ public final class MainActivity extends Activity
     findViewById(R.id.activity_main_button_back)
             .setOnClickListener(MainActivity.this);
     final CheckBox forceAPI1 =
-          findViewById(R.id.activity_main_api1CheckBox);
+            findViewById(R.id.activity_main_api1CheckBox);
     forceAPI1.setOnCheckedChangeListener(MainActivity.this);
     forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2());
   }
@@ -143,12 +144,13 @@ public final class MainActivity extends Activity
     final String
             keyword = "/jerryc05/UnlockMe/tree",
             URL = "https://www.github.com/jerryc05/UnlockMe/releases";
-
-    try (final URLConnectionBuilder connectionBuilder = URLConnectionBuilder
-            .get(URL)
-            .setConnectTimeout(1000)
-            .setReadTimeout(1000)
-            .connect()) {
+    URLConnectionBuilder connectionBuilder = null;
+    try {
+      connectionBuilder = URLConnectionBuilder
+              .get(URL)
+              .setConnectTimeout(1000)
+              .setReadTimeout(1000)
+              .connect();
       String result = connectionBuilder.getResult();
       result = result.substring(result.indexOf(keyword) +
               keyword.length() + 2);
@@ -177,8 +179,16 @@ public final class MainActivity extends Activity
         });
 
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotificationNoRethrow(
-              e.toString(), "checkUpdate()");
+      if (e instanceof UnknownHostException)
+        UserInterface.showExceptionToNotificationNoRethrow(
+                "Cannot connect to github.com!\n>>> " + e.toString(),
+                "checkUpdate()");
+      else
+        UserInterface.showExceptionToNotificationNoRethrow(
+                e.toString(), "checkUpdate()");
+    } finally {
+      if (connectionBuilder != null)
+        connectionBuilder.disconnect();
     }
   }
 }

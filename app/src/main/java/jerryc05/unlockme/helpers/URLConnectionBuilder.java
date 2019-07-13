@@ -1,5 +1,11 @@
 package jerryc05.unlockme.helpers;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -13,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import javax.net.ssl.HttpsURLConnection;
 
 import jerryc05.unlockme.BuildConfig;
+import jerryc05.unlockme.MainActivity;
 
 /**
  * A builder for URLConnection class.
@@ -29,10 +36,14 @@ import jerryc05.unlockme.BuildConfig;
  * @see javax.net.ssl.HttpsURLConnection
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
-public final class URLConnectionBuilder implements AutoCloseable {
+public final class URLConnectionBuilder {
 
   private final static String
           TAG = URLConnectionBuilder.class.getSimpleName();
+
+  public final static int
+          TRANSPORT_CELLULAR = 0,
+          TRANSPORT_WIFI     = 1;
 
   public final static String
           METHOD_GET     = "GET",
@@ -43,7 +54,7 @@ public final class URLConnectionBuilder implements AutoCloseable {
           METHOD_DELETE  = "DELETE",
           METHOD_TRACE   = "TRACE";
 
-  private boolean       isHTTP;
+  private boolean isHTTP, wifiOnly = true;
   private URLConnection urlConnection;
 
   private URLConnectionBuilder(String _baseURL) throws IOException {
@@ -68,14 +79,14 @@ public final class URLConnectionBuilder implements AutoCloseable {
 
   public URLConnectionBuilder connect() throws IOException {
     checkNullUrlConnection("run");
-    (isHTTP ? urlConnection
-            : (HttpsURLConnection) urlConnection).connect();
+    if (!wifiOnly ||
+            getNetworkType(MainActivity.applicationContext) == TRANSPORT_WIFI)
+      (isHTTP ? urlConnection
+              : (HttpsURLConnection) urlConnection).connect();
+    else
+      throw new IllegalStateException(
+              "Wifi-only mode is on. Cannot connect through cellular data!");
     return this;
-  }
-
-  @Override
-  public void close() {
-    disconnect();
   }
 
   public String getResult(String charset) throws IOException {
@@ -114,7 +125,9 @@ public final class URLConnectionBuilder implements AutoCloseable {
   }
 
   public String getResult() throws IOException {
-    return getResult(StandardCharsets.UTF_8.name());
+    return getResult(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
+            ? StandardCharsets.UTF_8.name()
+            : "utf-8");
   }
 
   public void disconnect() {
@@ -125,6 +138,41 @@ public final class URLConnectionBuilder implements AutoCloseable {
 
     if (BuildConfig.DEBUG)
       Log.d(TAG, "disconnect: " + urlConnection.getURL());
+  }
+
+  public static int getNetworkType(Context context)
+          throws IllegalStateException {
+    final ConnectivityManager mConnectivityManager = (ConnectivityManager)
+            context.getSystemService(Context.CONNECTIVITY_SERVICE);
+    assert mConnectivityManager != null;
+
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      final NetworkInfo mNetworkInfo =
+              mConnectivityManager.getActiveNetworkInfo();
+      assert mNetworkInfo != null;
+
+      if (mNetworkInfo.isConnected())
+        return mNetworkInfo.getType();
+      else
+        throw new IllegalStateException("Network disconnected!");
+
+    } else {
+      final Network network = mConnectivityManager.getActiveNetwork();
+      if (network == null)
+        throw new IllegalStateException("Network disconnected!");
+
+      final NetworkCapabilities networkCapabilities =
+              mConnectivityManager.getNetworkCapabilities(network);
+      assert networkCapabilities != null;
+      if (networkCapabilities.hasTransport(
+              NetworkCapabilities.TRANSPORT_CELLULAR))
+        return TRANSPORT_CELLULAR;
+      if (networkCapabilities.hasTransport(
+              NetworkCapabilities.TRANSPORT_WIFI))
+        return TRANSPORT_WIFI;
+
+      throw new IllegalStateException("TransportInfo unrecognized!");
+    }
   }
 
   public URLConnectionBuilder setRequestMethod(String _requestMethod) {
@@ -146,6 +194,11 @@ public final class URLConnectionBuilder implements AutoCloseable {
 
   public URLConnectionBuilder setReadTimeout(int _readTimeout) {
     urlConnection.setReadTimeout(_readTimeout);
+    return this;
+  }
+
+  public URLConnectionBuilder setWifiOnly(boolean _wifiOnly) {
+    wifiOnly = _wifiOnly;
     return this;
   }
 

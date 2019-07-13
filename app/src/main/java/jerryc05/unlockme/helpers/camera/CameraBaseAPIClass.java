@@ -2,6 +2,7 @@ package jerryc05.unlockme.helpers.camera;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,7 +12,6 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
 import android.os.Environment;
 import android.widget.Toast;
-
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,15 +29,14 @@ public abstract class CameraBaseAPIClass {
           SP_NAME_CAMERA             = "CAMERA",
           SP_KEY_PREFER_CAMERA_API_2 = "prefer_camera_api_2";
 
-  private static final boolean  canUseCamera2 =
+  private static final boolean canUseCamera2 =
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-  private static       String[] permissions;
-  private static       DialogInterface.OnClickListener
-                                requestPermissionRationaleOnClickListener;
+  private static       boolean isFront       = true;
 
   @SuppressWarnings("unused")
-  public static void getImageFromDefaultCamera(final MainActivity activity,
+  public static void getImageFromDefaultCamera(final Activity activity,
                                                final boolean isFront) {
+    CameraBaseAPIClass.isFront = isFront;
     if (getPreferCamera2() && canUseCamera2)
       getImageFromCamera2(activity, isFront);
     else
@@ -51,16 +50,16 @@ public abstract class CameraBaseAPIClass {
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera1(final MainActivity activity,
+  public static void getImageFromCamera1(final Activity activity,
                                          final boolean isFront) {
-    requestPermissions(activity);
-    Camera1APIHelper.getImage(isFront
-            ? Camera.CameraInfo.CAMERA_FACING_FRONT
-            : Camera.CameraInfo.CAMERA_FACING_BACK);
+    if (requestPermissions(activity))
+      Camera1APIHelper.getImage(isFront
+              ? Camera.CameraInfo.CAMERA_FACING_FRONT
+              : Camera.CameraInfo.CAMERA_FACING_BACK);
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera2(final MainActivity activity,
+  public static void getImageFromCamera2(final Activity activity,
                                          final boolean isFront) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       final String ERROR_MSG =
@@ -70,13 +69,13 @@ public abstract class CameraBaseAPIClass {
       throw new UnsupportedOperationException(ERROR_MSG);
     }
 
-    requestPermissions(activity);
-    Camera2APIHelper.getImage(isFront
-            ? CameraCharacteristics.LENS_FACING_FRONT
-            : CameraCharacteristics.LENS_FACING_BACK);
+    if (requestPermissions(activity))
+      Camera2APIHelper.getImage(isFront
+              ? CameraCharacteristics.LENS_FACING_FRONT
+              : CameraCharacteristics.LENS_FACING_BACK);
   }
 
-  static boolean requestPermissions(final MainActivity activity) {
+  static boolean requestPermissions(final Activity activity) {
     if (!MainActivity.applicationContext.getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
       UserInterface.showExceptionToDialog(activity,
@@ -126,31 +125,26 @@ public abstract class CameraBaseAPIClass {
 
   @SuppressWarnings("WeakerAccess")
   static DialogInterface.OnClickListener getRequestPermissionRationaleOnClickListener(
-          final MainActivity activity) {
-    if (requestPermissionRationaleOnClickListener == null)
-      requestPermissionRationaleOnClickListener =
-              new DialogInterface.OnClickListener() {
-                @SuppressLint("NewApi")
-                @Override
-                public void onClick(DialogInterface dialogInterface,
-                                    int i) {
-                  activity.requestPermissions(getPermissionsArray(),
-                          MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
-                }
-              };
-    return requestPermissionRationaleOnClickListener;
+          final Activity activity) {
+    return new DialogInterface.OnClickListener() {
+      @SuppressLint("NewApi")
+      @Override
+      public void onClick(DialogInterface dialogInterface,
+                          int i) {
+        activity.requestPermissions(getPermissionsArray(),
+                MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
+      }
+    };
   }
 
   @SuppressWarnings("WeakerAccess")
   static String[] getPermissionsArray() {
-    if (permissions == null)
-      permissions = new String[]{
-              Manifest.permission.CAMERA,
-              Manifest.permission.WRITE_EXTERNAL_STORAGE};
-    return permissions;
+    return new String[]{
+            Manifest.permission.CAMERA,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
   }
 
-  public static void onRequestPermissionFinished(final MainActivity activity,
+  public static void onRequestPermissionFinished(final Activity activity,
                                                  final int[] grantResults) {
     final boolean granted = grantResults.length > 0 &&
             grantResults[0] == PackageManager.PERMISSION_GRANTED;
@@ -158,6 +152,8 @@ public abstract class CameraBaseAPIClass {
             ? "Camera and Write External Storage Permissions Granted √"
             : "Camera or Write External Storage Permissions Denied ×";
     Toast.makeText(activity, granted_str, Toast.LENGTH_SHORT).show();
+    if (granted)
+      getImageFromDefaultCamera(activity, isFront);
   }
 
   static void saveImageToDisk(final byte[] data) {

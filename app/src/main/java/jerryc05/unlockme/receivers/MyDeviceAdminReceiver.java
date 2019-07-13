@@ -18,11 +18,13 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
   public void onPasswordFailed(Context context, Intent intent, UserHandle user) {
     super.onPasswordFailed(context, intent, user);
 
+    UserInterface.notifyToUI(
+            "onPasswordFailed!", context.getPackageName(), context);
+
     MainActivity.threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
         final MainActivity activity = MainActivity.weakMainActivity.get();
-        CameraBaseAPIClass.getImageFromDefaultCamera(activity, true);
         CameraBaseAPIClass.getImageFromDefaultCamera(activity, true);
       }
     });
@@ -35,7 +37,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
     if (failedAttempt > 0) {
       UserInterface.notifyToUI("Unsuccessful Unlock Attempt Captured",
               "UnlockMe captured " + failedAttempt +
-                      " attempt(s) since last successful unlock");
+                      " attempt(s) since last successful unlock", context);
     }
     failedAttempt = 0;
   }

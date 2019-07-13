@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.BitmapFactory;
 import android.os.Build;
@@ -63,7 +64,7 @@ public abstract class UserInterface {
             MainActivity.applicationContext)
             .setContentTitle("Crash Report")
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_shield_foreground)
+            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
             .setSubText(subText)
             .setStyle(new Notification.BigTextStyle()
                     .bigText(contentText));
@@ -82,7 +83,7 @@ public abstract class UserInterface {
             MainActivity.applicationContext)
             .setContentTitle("Picture Taken")
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_shield_foreground)
+            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
             .setStyle(new Notification.BigPictureStyle()
                     .bigPicture(BitmapFactory.decodeByteArray(
                             bytes, 0, bytes.length)));
@@ -97,11 +98,17 @@ public abstract class UserInterface {
   @SuppressWarnings("unused")
   public static void notifyToUI(final String title,
                                 final String contentText) {
-    final Notification.Builder builder = new Notification.Builder(
-            MainActivity.applicationContext)
+    notifyToUI(title, contentText, MainActivity.applicationContext);
+  }
+
+  @SuppressWarnings("unused")
+  public static void notifyToUI(final String title,
+                                final String contentText,
+                                final Context context) {
+    final Notification.Builder builder = new Notification.Builder(context)
             .setContentTitle(title)
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_shield_foreground);
+            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground);
 
     getNotificationManager().notify(-1, setNotificationChannel(builder,
             getNotificationManager(),

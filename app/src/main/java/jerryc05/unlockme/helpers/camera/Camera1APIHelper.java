@@ -3,11 +3,6 @@ package jerryc05.unlockme.helpers.camera;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Build;
-import android.util.Log;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import jerryc05.unlockme.helpers.UserInterface;
 
