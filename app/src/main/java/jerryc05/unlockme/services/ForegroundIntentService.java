@@ -5,8 +5,6 @@ import android.app.Notification;
 import android.content.Intent;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.UserInterface;
@@ -43,7 +41,7 @@ public class ForegroundIntentService extends IntentService {
   }
 
   @Override
-  protected void onHandleIntent(@Nullable Intent intent) {
+  protected void onHandleIntent( Intent intent) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onHandleIntent: ");
 
