@@ -6,10 +6,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+
+import org.json.JSONArray;
 
 import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
@@ -23,6 +26,7 @@ import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
+import jerryc05.unlockme.services.ForegroundIntentService;
 
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 
@@ -50,6 +54,7 @@ public final class MainActivity extends Activity
             .setOnClickListener(MainActivity.this);
     findViewById(R.id.activity_main_button_back)
             .setOnClickListener(MainActivity.this);
+
     final CheckBox forceAPI1 =
             findViewById(R.id.activity_main_api1CheckBox);
     forceAPI1.setOnCheckedChangeListener(MainActivity.this);
@@ -142,19 +147,19 @@ public final class MainActivity extends Activity
 
   void checkUpdate() {
     final String
-            keyword = "/jerryc05/UnlockMe/tree",
-            URL = "https://www.github.com/jerryc05/UnlockMe/releases";
+            URL = "https://api.github.com/repos/jerryc05/UnlockMe/tags";
     URLConnectionBuilder connectionBuilder = null;
     try {
       connectionBuilder = URLConnectionBuilder
               .get(URL)
               .setConnectTimeout(1000)
               .setReadTimeout(1000)
+              .setUseCache(false)
               .connect();
-      String result = connectionBuilder.getResult();
-      result = result.substring(result.indexOf(keyword) +
-              keyword.length() + 2);
-      final String latest = result.substring(0, result.indexOf('"'));
+
+      final String latest = new JSONArray(
+              connectionBuilder.getResult()).getJSONObject(0)
+              .getString("name").substring(1);
 
       if (!latest.equals(BuildConfig.VERSION_NAME))
         runOnUiThread(new Runnable() {
@@ -162,7 +167,7 @@ public final class MainActivity extends Activity
           public void run() {
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("New Version Available")
-                    .setMessage("Do you want to upgrade from\n" +
+                    .setMessage("Do you want to upgrade from " +
                             BuildConfig.VERSION_NAME + "  to  " + latest + '?')
                     .setPositiveButton("YES",
                             new DialogInterface.OnClickListener() {
@@ -178,14 +183,13 @@ public final class MainActivity extends Activity
           }
         });
 
+    } catch (final UnknownHostException e) {
+      UserInterface.showExceptionToNotificationNoRethrow(
+              "Cannot connect to github.com!\n>>> " + e.toString(),
+              "checkUpdate()");
     } catch (final Exception e) {
-      if (e instanceof UnknownHostException)
-        UserInterface.showExceptionToNotificationNoRethrow(
-                "Cannot connect to github.com!\n>>> " + e.toString(),
-                "checkUpdate()");
-      else
-        UserInterface.showExceptionToNotificationNoRethrow(
-                e.toString(), "checkUpdate()");
+      UserInterface.showExceptionToNotificationNoRethrow(
+              e.toString(), "checkUpdate()");
     } finally {
       if (connectionBuilder != null)
         connectionBuilder.disconnect();

@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <uses-feature
         android:name="android.hardware.camera.front"
@@ -22,7 +23,7 @@
         tools:ignore="AllowBackup">
         <service
             android:name=".services.ForegroundIntentService"
-            android:exported="false"></service>
+            android:exported="false"/>
 
         <activity android:name=".MainActivity">
             <intent-filter>

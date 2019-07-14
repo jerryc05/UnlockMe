@@ -34,13 +34,13 @@ public abstract class CameraBaseAPIClass {
   private static       boolean isFront       = true;
 
   @SuppressWarnings("unused")
-  public static void getImageFromDefaultCamera(final Activity activity,
+  public static void getImageFromDefaultCamera(final Context context,
                                                final boolean isFront) {
     CameraBaseAPIClass.isFront = isFront;
     if (getPreferCamera2() && canUseCamera2)
-      getImageFromCamera2(activity, isFront);
+      getImageFromCamera2(context, isFront);
     else
-      getImageFromCamera1(activity, isFront);
+      getImageFromCamera1(context, isFront);
   }
 
   public static boolean getPreferCamera2() {
@@ -50,16 +50,16 @@ public abstract class CameraBaseAPIClass {
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera1(final Activity activity,
+  public static void getImageFromCamera1(final Context context,
                                          final boolean isFront) {
-    if (requestPermissions(activity))
+    if (requestPermissions(context))
       Camera1APIHelper.getImage(isFront
               ? Camera.CameraInfo.CAMERA_FACING_FRONT
               : Camera.CameraInfo.CAMERA_FACING_BACK);
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera2(final Activity activity,
+  public static void getImageFromCamera2(final Context context,
                                          final boolean isFront) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       final String ERROR_MSG =
@@ -69,56 +69,57 @@ public abstract class CameraBaseAPIClass {
       throw new UnsupportedOperationException(ERROR_MSG);
     }
 
-    if (requestPermissions(activity))
+    if (requestPermissions(context))
       Camera2APIHelper.getImage(isFront
               ? CameraCharacteristics.LENS_FACING_FRONT
               : CameraCharacteristics.LENS_FACING_BACK);
   }
 
-  static boolean requestPermissions(final Activity activity) {
+  static boolean requestPermissions(final Context context) {
     if (!MainActivity.applicationContext.getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-      UserInterface.showExceptionToDialog(activity,
+      UserInterface.showExceptionToDialog(context,
               new UnsupportedOperationException(
                       "requestPermissions() Camera device not found!"));
     }
 
     if (!Environment.MEDIA_MOUNTED.equals(
             Environment.getExternalStorageState()))
-      UserInterface.showExceptionToDialog(activity,
+      UserInterface.showExceptionToDialog(context,
               new UnsupportedOperationException(
                       "requestPermissions() External storage not writable!"));
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            (activity.checkSelfPermission(Manifest.permission.CAMERA) ==
+            (context.checkSelfPermission(Manifest.permission.CAMERA) ==
                     PackageManager.PERMISSION_GRANTED &&
-                    activity.checkSelfPermission(
+                    context.checkSelfPermission(
                             Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
                             PackageManager.PERMISSION_GRANTED))
       return true;
+    if (context instanceof Activity)
+      if (((Activity) context).shouldShowRequestPermissionRationale(
+              Manifest.permission.CAMERA) ||
+              ((Activity) context).shouldShowRequestPermissionRationale(
+                      Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 
-    if (activity.shouldShowRequestPermissionRationale(
-            Manifest.permission.CAMERA) ||
-            activity.shouldShowRequestPermissionRationale(
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-
-      activity.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          new AlertDialog.Builder(activity)
-                  .setTitle("Permission Required")
-                  .setMessage("We need the following permissions to work properly:\n\n" +
-                          "-\t\tCAMERA\n-\t\tWRITE_EXTERNAL_STORAGE")
-                  .setIcon(R.drawable.ic_round_warning_24px)
-                  .setCancelable(false)
-                  .setPositiveButton("OK",
-                          getRequestPermissionRationaleOnClickListener(activity))
-                  .show();
-        }
-      });
-    } else
-      activity.requestPermissions(getPermissionsArray(),
-              MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
+        ((Activity) context).runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            new AlertDialog.Builder(context)
+                    .setTitle("Permission Required")
+                    .setMessage("We need the following permissions to work properly:\n\n" +
+                            "-\t\tCAMERA\n-\t\tWRITE_EXTERNAL_STORAGE")
+                    .setIcon(R.drawable.ic_round_warning_24px)
+                    .setCancelable(false)
+                    .setPositiveButton("OK",
+                            getRequestPermissionRationaleOnClickListener(
+                                    ((Activity) context)))
+                    .show();
+          }
+        });
+      } else
+        ((Activity) context).requestPermissions(getPermissionsArray(),
+                MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
 
     return false;
   }

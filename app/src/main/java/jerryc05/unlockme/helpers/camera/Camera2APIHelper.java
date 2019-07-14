@@ -125,7 +125,9 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
     final MainActivity activity = MainActivity.weakMainActivity.get();
     if (activity == null || requestPermissions(activity))
       try {
-        Looper.prepare();
+        if (Looper.myLooper() == null)
+          Looper.prepare();
+
         mCameraManager.openCamera(cameraID, openCameraStateCallback, null);
         Looper.loop();
       } catch (final Exception e) {

@@ -3,31 +3,42 @@ package jerryc05.unlockme.receivers;
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.UserHandle;
+import android.util.Log;
 
-import jerryc05.unlockme.MainActivity;
+import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
-import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
+import jerryc05.unlockme.services.ForegroundIntentService;
 
 @SuppressWarnings("NullableProblems")
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
-  private static int failedAttempt;
+  private static final String TAG =
+          MyDeviceAdminReceiver.class.getSimpleName();
+  private static       int    failedAttempt;
 
   @Override
   public void onPasswordFailed(Context context, Intent intent, UserHandle user) {
     super.onPasswordFailed(context, intent, user);
 
-    UserInterface.notifyToUI(
-            "onPasswordFailed!", context.getPackageName(), context);
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onPasswordFailed: ");
 
-    MainActivity.threadPoolExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        final MainActivity activity = MainActivity.weakMainActivity.get();
-        CameraBaseAPIClass.getImageFromDefaultCamera(activity, true);
-      }
-    });
+    final Intent mIntent = new Intent(context,
+            ForegroundIntentService.class);
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+      context.startService(mIntent);
+    else
+      context.startForegroundService(mIntent);
+
+//    MainActivity.threadPoolExecutor.execute(new Runnable() {
+//      @Override
+//      public void run() {
+//        final MainActivity activity = MainActivity.weakMainActivity.get();
+//        CameraBaseAPIClass.getImageFromDefaultCamera(activity, true);
+//      }
+//    });
   }
 
   @Override

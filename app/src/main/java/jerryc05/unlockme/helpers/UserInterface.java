@@ -15,16 +15,29 @@ import jerryc05.unlockme.R;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
+/**
+ * A collection class for commonly used User Interface methods.
+ *
+ * @author \
+ * \           d88b d88888b d8888b. d8888b. db    db  .o88b.  .d88b.    ooooo
+ * \           `8P' 88'     88  `8D 88  `8D `8b  d8' d8P  Y8 .8P  88.  8P~~~~
+ * \            88  88ooooo 88oobY' 88oobY'  `8bd8'  8P      88  d'88 dP
+ * \            88  88~~~~~ 88`8b   88`8b      88    8b      88 d' 88 V8888b.
+ * \        db. 88  88.     88 `88. 88 `88.    88    Y8b  d8 `88  d8'     `8D
+ * \        Y8888P  Y88888P 88   YD 88   YD    YP     `Y88P'  `Y88P'  88oobY'
+ * @see android.app.AlertDialog
+ * @see android.app.Notification
+ */
 public abstract class UserInterface {
 
   private static NotificationManager notificationManager;
 
   @SuppressWarnings("unused")
-  public static void showExceptionToDialog(final Activity activity, final Exception e) {
-    if (activity == null)
+  public static void showExceptionToDialog(final Context context, final Exception e) {
+    if (context == null)
       return;
 
-    showExceptionToDialog(activity, e, new DialogInterface.OnClickListener() {
+    showExceptionToDialog(context, e, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialogInterface, int i) {
         throw new UnsupportedOperationException(e);
@@ -33,15 +46,15 @@ public abstract class UserInterface {
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void showExceptionToDialog(final Activity activity, final Exception e,
+  public static void showExceptionToDialog(final Context context, final Exception e,
                                            final DialogInterface.OnClickListener onClickListener) {
-    if (activity == null)
+    if (!(context instanceof Activity))
       return;
 
-    activity.runOnUiThread(new Runnable() {
+    ((Activity) context).runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        new AlertDialog.Builder(activity)
+        new AlertDialog.Builder(context)
                 .setTitle("Crash Report")
                 .setMessage(e.toString())
                 .setIcon(R.drawable.ic_round_error_24px)
@@ -117,7 +130,7 @@ public abstract class UserInterface {
             true).build());
   }
 
-  private static Notification.Builder setNotificationChannel(
+  public static Notification.Builder setNotificationChannel(
           final Notification.Builder builder,
           final NotificationManager notificationManager,
           final String channelID, final String desc,
@@ -150,7 +163,7 @@ public abstract class UserInterface {
     return builder;
   }
 
-  private static NotificationManager getNotificationManager() {
+  public static NotificationManager getNotificationManager() {
     if (notificationManager == null)
       notificationManager = (NotificationManager)
               MainActivity.applicationContext.
