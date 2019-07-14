@@ -1,5 +1,6 @@
 package jerryc05.unlockme.helpers.camera;
 
+import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Build;
@@ -13,11 +14,11 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
   private static Camera                 mCamera;
   private static Camera.PictureCallback mJpegPictureCallback;
 
-  static void getImage(final int facing) {
+  static void getImage(final int facing,final Context context) {
     predefinedFacing = facing;
     setupCamera1();
-    openCamera1();
-    captureCamera1();
+    openCamera1(context);
+    captureCamera1(context);
   }
 
   private static void setupCamera1() {
@@ -33,7 +34,7 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
     }
   }
 
-  private static void openCamera1() {
+  private static void openCamera1(final Context context) {
     try {
       mCamera = Camera.open(cameraID);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -53,31 +54,32 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
 //      mCamera.setParameters(mCameraParameters);
     } catch (Exception e) {
       UserInterface.showExceptionToNotification(
-              e.toString(), "openCamera1()");
+              e.toString(), "openCamera1()",context);
     }
   }
 
-  private static void captureCamera1() {
+  private static void captureCamera1(final Context context) {
     try {
       mCamera.setPreviewTexture(new SurfaceTexture(-1));
       mCamera.startPreview();
-      mCamera.takePicture(null, null, getJpegPictureCallback());
+      mCamera.takePicture(null, null,
+              getJpegPictureCallback(context));
 
     } catch (Exception e) {
       closeCamera1(mCamera);
       UserInterface.showExceptionToNotification(
-              e.toString(), "captureCamera1()");
+              e.toString(), "captureCamera1()",context);
     }
   }
 
   @SuppressWarnings("WeakerAccess")
-  static Camera.PictureCallback getJpegPictureCallback() {
+  static Camera.PictureCallback getJpegPictureCallback(final Context context) {
     if (mJpegPictureCallback == null)
       mJpegPictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
           closeCamera1(camera);
-          saveImageToDisk(data);
+          saveImageToDisk(data,context);
         }
       };
     return mJpegPictureCallback;

@@ -10,7 +10,6 @@ import android.content.DialogInterface;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 
-import jerryc05.unlockme.MainActivity;
 import jerryc05.unlockme.R;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -66,15 +65,16 @@ public abstract class UserInterface {
   }
 
   public static void showExceptionToNotification(final String contentText,
-                                                 final String subText) {
-    showExceptionToNotificationNoRethrow(contentText, subText);
+                                                 final String subText,
+                                                 final Context context) {
+    showExceptionToNotificationNoRethrow(contentText, subText,context);
     throw new UnsupportedOperationException(contentText);
   }
 
   public static void showExceptionToNotificationNoRethrow(final String contentText,
-                                                          final String subText) {
-    final Notification.Builder builder = new Notification.Builder(
-            MainActivity.applicationContext)
+                                                          final String subText,
+                                                          final Context context) {
+    final Notification.Builder builder = new Notification.Builder(context)
             .setContentTitle("Crash Report")
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
@@ -82,8 +82,8 @@ public abstract class UserInterface {
             .setStyle(new Notification.BigTextStyle()
                     .bigText(contentText));
 
-    getNotificationManager().notify(-1, setNotificationChannel(builder,
-            getNotificationManager(),
+    getNotificationManager(context).notify(-1, setNotificationChannel(builder,
+            getNotificationManager(context),
             "Crash Report",
             "Crash report notification channel for UnlockMe",
             true).build());
@@ -91,9 +91,9 @@ public abstract class UserInterface {
 
   @SuppressWarnings("unused")
   public static void notifyPictureToUI(final String contentText,
-                                       final byte[] bytes) {
-    final Notification.Builder builder = new Notification.Builder(
-            MainActivity.applicationContext)
+                                       final byte[] bytes,
+                                       final Context context) {
+    final Notification.Builder builder = new Notification.Builder(context)
             .setContentTitle("Picture Taken")
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
@@ -101,17 +101,11 @@ public abstract class UserInterface {
                     .bigPicture(BitmapFactory.decodeByteArray(
                             bytes, 0, bytes.length)));
 
-    getNotificationManager().notify(-1, setNotificationChannel(builder,
-            getNotificationManager(),
+    getNotificationManager(context).notify(-1, setNotificationChannel(builder,
+            getNotificationManager(context),
             "Image Captured Report",
             "Image captured report notification channel for UnlockMe",
             false).build());
-  }
-
-  @SuppressWarnings("unused")
-  public static void notifyToUI(final String title,
-                                final String contentText) {
-    notifyToUI(title, contentText, MainActivity.applicationContext);
   }
 
   @SuppressWarnings("unused")
@@ -123,8 +117,8 @@ public abstract class UserInterface {
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground);
 
-    getNotificationManager().notify(-1, setNotificationChannel(builder,
-            getNotificationManager(),
+    getNotificationManager(context).notify(-1, setNotificationChannel(builder,
+            getNotificationManager(context),
             "UnlockMe Notification Channel",
             "Regular notification channel for UnlockMe",
             true).build());
@@ -163,11 +157,10 @@ public abstract class UserInterface {
     return builder;
   }
 
-  public static NotificationManager getNotificationManager() {
+  public static NotificationManager getNotificationManager(Context context) {
     if (notificationManager == null)
       notificationManager = (NotificationManager)
-              MainActivity.applicationContext.
-                      getSystemService(NOTIFICATION_SERVICE);
+              context.getSystemService(NOTIFICATION_SERVICE);
     return notificationManager;
   }
 }

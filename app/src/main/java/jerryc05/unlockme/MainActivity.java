@@ -6,15 +6,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
 import org.json.JSONArray;
 
-import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -26,7 +25,6 @@ import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
-import jerryc05.unlockme.services.ForegroundIntentService;
 
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 
@@ -34,14 +32,15 @@ import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_
 public final class MainActivity extends Activity
         implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
-  public final static int
+  private final static String
+          TAG                                    = MainActivity.class.getSimpleName();
+  public final static  int
           REQUEST_CODE_DEVICE_ADMIN              = 0,
           REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
-  public        ReentrantLock               requestDeviceAdminLock;
-  public static Context                     applicationContext;
-  public static WeakReference<MainActivity> weakMainActivity;
-  public static ThreadPoolExecutor          threadPoolExecutor;
+  public        ReentrantLock      requestDeviceAdminLock;
+  public static Context            applicationContext;
+  public static ThreadPoolExecutor threadPoolExecutor;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +48,6 @@ public final class MainActivity extends Activity
     setContentView(R.layout.activity_main);
 
     applicationContext = getApplicationContext();
-    weakMainActivity = new WeakReference<>(MainActivity.this);
     findViewById(R.id.activity_main_button_front)
             .setOnClickListener(MainActivity.this);
     findViewById(R.id.activity_main_button_back)
@@ -58,7 +56,7 @@ public final class MainActivity extends Activity
     final CheckBox forceAPI1 =
             findViewById(R.id.activity_main_api1CheckBox);
     forceAPI1.setOnCheckedChangeListener(MainActivity.this);
-    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2());
+    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2(this));
   }
 
   @Override
@@ -77,9 +75,19 @@ public final class MainActivity extends Activity
   }
 
   @Override
+  protected void onStop() {
+    super.onStop();
+
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onStop: ");
+  }
+
+  @Override
   protected void onDestroy() {
     super.onDestroy();
 
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onDestroy: ");
     if (threadPoolExecutor != null) {
       threadPoolExecutor.shutdownNow();
       threadPoolExecutor = null;
@@ -123,7 +131,7 @@ public final class MainActivity extends Activity
               .apply();
   }
 
-  private static ThreadPoolExecutor getThreadPoolExecutor() {
+  private ThreadPoolExecutor getThreadPoolExecutor() {
     if (threadPoolExecutor == null) {
       RejectedExecutionHandler rejectedExecutionHandler
               = new RejectedExecutionHandler() {
@@ -131,9 +139,12 @@ public final class MainActivity extends Activity
         public void rejectedExecution(Runnable runnable,
                                       ThreadPoolExecutor threadPoolExecutor) {
           UserInterface.showExceptionToNotificationNoRethrow(
-                  "ThreadPoolExecutor：\n>>> " + threadPoolExecutor.toString()
-                          + "\non MainActivity rejected:\n >>> " + runnable.toString(),
-                  "threadPoolExecutor#rejectedExecution()");
+                  "ThreadPoolExecutor：\n>>> "
+                          + threadPoolExecutor.toString()
+                          + "\non MainActivity rejected:\n >>> "
+                          + runnable.toString(),
+                  "threadPoolExecutor#rejectedExecution()",
+                  MainActivity.this);
         }
       };
       final int processorCount = Runtime.getRuntime().availableProcessors();
@@ -179,6 +190,7 @@ public final class MainActivity extends Activity
                               }
                             })
                     .setNegativeButton("NO", null)
+                    .setIcon(R.drawable.ic_round_info_24px)
                     .show();
           }
         });
@@ -186,10 +198,13 @@ public final class MainActivity extends Activity
     } catch (final UnknownHostException e) {
       UserInterface.showExceptionToNotificationNoRethrow(
               "Cannot connect to github.com!\n>>> " + e.toString(),
-              "checkUpdate()");
+              "checkUpdate()", this);
+    } catch (final IllegalStateException e) {
+      UserInterface.notifyToUI("Update Interrupted",
+              "Will not connect through cellular data!", this);
     } catch (final Exception e) {
       UserInterface.showExceptionToNotificationNoRethrow(
-              e.toString(), "checkUpdate()");
+              e.toString(), "checkUpdate()", this);
     } finally {
       if (connectionBuilder != null)
         connectionBuilder.disconnect();

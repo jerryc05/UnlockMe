@@ -19,9 +19,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import jerryc05.unlockme.MainActivity;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.UserInterface;
+
+import static jerryc05.unlockme.MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL;
 
 public abstract class CameraBaseAPIClass {
 
@@ -37,46 +38,46 @@ public abstract class CameraBaseAPIClass {
   public static void getImageFromDefaultCamera(final Context context,
                                                final boolean isFront) {
     CameraBaseAPIClass.isFront = isFront;
-    if (getPreferCamera2() && canUseCamera2)
-      getImageFromCamera2(context, isFront);
+    if (getPreferCamera2(context) && canUseCamera2)
+      getImageFromCamera2(isFront, context);
     else
-      getImageFromCamera1(context, isFront);
+      getImageFromCamera1(isFront, context);
   }
 
-  public static boolean getPreferCamera2() {
-    return MainActivity.applicationContext.getSharedPreferences(
+  public static boolean getPreferCamera2(final Context context) {
+    return context.getSharedPreferences(
             SP_NAME_CAMERA, Context.MODE_PRIVATE)
             .getBoolean(SP_KEY_PREFER_CAMERA_API_2, true);
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera1(final Context context,
-                                         final boolean isFront) {
+  public static void getImageFromCamera1(final boolean isFront,
+                                         final Context context) {
     if (requestPermissions(context))
       Camera1APIHelper.getImage(isFront
               ? Camera.CameraInfo.CAMERA_FACING_FRONT
-              : Camera.CameraInfo.CAMERA_FACING_BACK);
+              : Camera.CameraInfo.CAMERA_FACING_BACK, context);
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera2(final Context context,
-                                         final boolean isFront) {
+  public static void getImageFromCamera2(final boolean isFront,
+                                         final Context context) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       final String ERROR_MSG =
               "Cannot use Camera2 API on devices lower than Lollipop";
       UserInterface.showExceptionToNotification(ERROR_MSG,
-              "CameraBaseAPIClass#getImageFromCamera2()");
+              "CameraBaseAPIClass#getImageFromCamera2()", context);
       throw new UnsupportedOperationException(ERROR_MSG);
     }
 
     if (requestPermissions(context))
       Camera2APIHelper.getImage(isFront
               ? CameraCharacteristics.LENS_FACING_FRONT
-              : CameraCharacteristics.LENS_FACING_BACK);
+              : CameraCharacteristics.LENS_FACING_BACK, context);
   }
 
   static boolean requestPermissions(final Context context) {
-    if (!MainActivity.applicationContext.getPackageManager()
+    if (!context.getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
       UserInterface.showExceptionToDialog(context,
               new UnsupportedOperationException(
@@ -119,7 +120,7 @@ public abstract class CameraBaseAPIClass {
         });
       } else
         ((Activity) context).requestPermissions(getPermissionsArray(),
-                MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
+                REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
 
     return false;
   }
@@ -133,7 +134,7 @@ public abstract class CameraBaseAPIClass {
       public void onClick(DialogInterface dialogInterface,
                           int i) {
         activity.requestPermissions(getPermissionsArray(),
-                MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
+                REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
       }
     };
   }
@@ -157,7 +158,7 @@ public abstract class CameraBaseAPIClass {
       getImageFromDefaultCamera(activity, isFront);
   }
 
-  static void saveImageToDisk(final byte[] data) {
+  static void saveImageToDisk(final byte[] data, final Context context) {
     //noinspection SpellCheckingInspection
     final String
             timeFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS",
@@ -165,19 +166,20 @@ public abstract class CameraBaseAPIClass {
             dirName = Environment.getExternalStorageDirectory() + "/UnlockMe/",
             fileName = "UnlockMe_" + timeFormat + ".jpg";
 
-    UserInterface.notifyPictureToUI(fileName, data);
+    UserInterface.notifyPictureToUI(fileName, data, context);
     final File
             dir = new File(dirName),
             file = new File(dir, fileName);
 
     if (!dir.isDirectory() && !dir.mkdirs())
       UserInterface.showExceptionToNotification("Cannot create path " + fileName,
-              "saveImageToDisk()");
+              "saveImageToDisk()", context);
 
     try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
       fileOutputStream.write(data);
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotification(e.toString(), "saveImageToDisk()");
+      UserInterface.showExceptionToNotification(
+              e.toString(), "saveImageToDisk()", context);
     }
   }
 }

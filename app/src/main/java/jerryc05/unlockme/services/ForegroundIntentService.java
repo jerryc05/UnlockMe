@@ -28,24 +28,32 @@ public class ForegroundIntentService extends IntentService {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onCreate: ");
 
-    final String title = "UnlockMe Background Service";
+    final String title = "Background Service";
     final Notification.Builder builder =
             new Notification.Builder(this)
-            .setContentTitle(title)
-//            .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground);
+                    .setContentTitle("UnlockMe " + title)
+                    .setSmallIcon(
+                            R.drawable.ic_launcher_smartphone_lock_foreground);
     startForeground(-1, UserInterface.setNotificationChannel(builder,
-            getNotificationManager(), title,
+            getNotificationManager(this), title,
             "Background service notification for UnlockMe.",
             true).build());
   }
 
   @Override
-  protected void onHandleIntent( Intent intent) {
+  protected void onHandleIntent(Intent intent) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onHandleIntent: ");
 
     CameraBaseAPIClass.getImageFromDefaultCamera(
             this, true);
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onDestroy: ");
   }
 }
