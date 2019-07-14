@@ -25,6 +25,7 @@ import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
+import jerryc05.unlockme.services.ForegroundIntentService;
 
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 
@@ -49,9 +50,11 @@ public final class MainActivity extends Activity
 
     applicationContext = getApplicationContext();
     findViewById(R.id.activity_main_button_front)
-            .setOnClickListener(MainActivity.this);
+            .setOnClickListener(this);
     findViewById(R.id.activity_main_button_back)
-            .setOnClickListener(MainActivity.this);
+            .setOnClickListener(this);
+    findViewById(R.id.activity_main_button_stopService)
+            .setOnClickListener(this);
 
     final CheckBox forceAPI1 =
             findViewById(R.id.activity_main_api1CheckBox);
@@ -113,13 +116,19 @@ public final class MainActivity extends Activity
 
   @Override
   public void onClick(View view) {
-    threadPoolExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        CameraBaseAPIClass.getImageFromDefaultCamera(MainActivity.this,
-                view.getId() == R.id.activity_main_button_front);
-      }
-    });
+    final int id = view.getId();
+
+    if (id == R.id.activity_main_button_stopService)
+      stopService(new Intent(
+              this, ForegroundIntentService.class));
+    else
+      threadPoolExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+          CameraBaseAPIClass.getImageFromDefaultCamera(MainActivity.this,
+                  view.getId() == R.id.activity_main_button_front);
+        }
+      });
   }
 
   @Override

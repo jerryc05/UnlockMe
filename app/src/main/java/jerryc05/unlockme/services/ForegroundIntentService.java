@@ -31,7 +31,7 @@ public class ForegroundIntentService extends IntentService {
     final String title = "Background Service";
     final Notification.Builder builder =
             new Notification.Builder(this)
-                    .setContentTitle("UnlockMe " + title)
+                    .setContentTitle(title)
                     .setSmallIcon(
                             R.drawable.ic_launcher_smartphone_lock_foreground);
     startForeground(-1, UserInterface.setNotificationChannel(builder,

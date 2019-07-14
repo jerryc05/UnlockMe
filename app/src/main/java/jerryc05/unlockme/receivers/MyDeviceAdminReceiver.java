@@ -20,8 +20,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
   @Override
   public void onPasswordFailed(Context context, Intent intent, UserHandle user) {
-    super.onPasswordFailed(context, intent, user);
-
+    super.onPasswordFailed(context, intent);
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onPasswordFailed: ");
 
@@ -31,14 +30,6 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
       context.startService(mIntent);
     else
       context.startForegroundService(mIntent);
-
-//    MainActivity.threadPoolExecutor.execute(new Runnable() {
-//      @Override
-//      public void run() {
-//        final MainActivity activity = MainActivity.weakMainActivity.get();
-//        CameraBaseAPIClass.getImageFromDefaultCamera(activity, true);
-//      }
-//    });
   }
 
   @Override
