@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 import javax.net.ssl.HttpsURLConnection;
 
 import jerryc05.unlockme.BuildConfig;
-import jerryc05.unlockme.MainActivity;
+import jerryc05.unlockme.activities.MainActivity;
 
 /**
  * A builder for URLConnection class.
@@ -77,10 +77,10 @@ public final class URLConnectionBuilder {
     return new URLConnectionBuilder(_baseURL).setRequestMethod(METHOD_POST);
   }
 
-  public URLConnectionBuilder connect() throws IOException {
+  public URLConnectionBuilder connect(final Context context) throws IOException {
     checkNullUrlConnection("run");
     if (!wifiOnly ||
-            getNetworkType(MainActivity.applicationContext) == TRANSPORT_WIFI)
+            getNetworkType(context) == TRANSPORT_WIFI)
       (isHTTP ? urlConnection
               : (HttpsURLConnection) urlConnection).connect();
     else

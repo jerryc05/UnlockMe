@@ -22,7 +22,7 @@ import java.util.Locale;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.UserInterface;
 
-import static jerryc05.unlockme.MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL;
+import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL;
 
 public abstract class CameraBaseAPIClass {
 
@@ -32,7 +32,7 @@ public abstract class CameraBaseAPIClass {
 
   private static final boolean canUseCamera2 =
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-  private static       boolean isFront       = true;
+  public static        boolean isFront       = true;
 
   @SuppressWarnings("unused")
   public static void getImageFromDefaultCamera(final Context context,
@@ -76,7 +76,7 @@ public abstract class CameraBaseAPIClass {
               : CameraCharacteristics.LENS_FACING_BACK, context);
   }
 
-  static boolean requestPermissions(final Context context) {
+  public static boolean requestPermissions(final Context context) {
     if (!context.getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
       UserInterface.showExceptionToDialog(context,
@@ -148,8 +148,14 @@ public abstract class CameraBaseAPIClass {
 
   public static void onRequestPermissionFinished(final Activity activity,
                                                  final int[] grantResults) {
-    final boolean granted = grantResults.length > 0 &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED;
+    boolean granted = true;
+    if (grantResults.length > 0)
+      for (int result : grantResults)
+        if (result != PackageManager.PERMISSION_GRANTED) {
+          granted = false;
+          break;
+        }
+
     final String granted_str = granted
             ? "Camera and Write External Storage Permissions Granted √"
             : "Camera or Write External Storage Permissions Denied ×";
@@ -172,7 +178,8 @@ public abstract class CameraBaseAPIClass {
             file = new File(dir, fileName);
 
     if (!dir.isDirectory() && !dir.mkdirs())
-      UserInterface.showExceptionToNotification("Cannot create path " + fileName,
+      UserInterface.showExceptionToNotification(
+              "Cannot create path " + fileName,
               "saveImageToDisk()", context);
 
     try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {

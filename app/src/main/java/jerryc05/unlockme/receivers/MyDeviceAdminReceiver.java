@@ -9,7 +9,7 @@ import android.util.Log;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
-import jerryc05.unlockme.services.ForegroundIntentService;
+import jerryc05.unlockme.services.ForegroundService;
 
 @SuppressWarnings("NullableProblems")
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
@@ -25,7 +25,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
       Log.d(TAG, "onPasswordFailed: ");
 
     final Intent mIntent = new Intent(context,
-            ForegroundIntentService.class);
+            ForegroundService.class);
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
       context.startService(mIntent);
     else

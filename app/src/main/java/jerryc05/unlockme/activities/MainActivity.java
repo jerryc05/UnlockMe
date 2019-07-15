@@ -1,4 +1,4 @@
-package jerryc05.unlockme;
+package jerryc05.unlockme.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -6,11 +6,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.Switch;
 
 import org.json.JSONArray;
 
@@ -21,11 +22,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jerryc05.unlockme.BuildConfig;
+import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
-import jerryc05.unlockme.services.ForegroundIntentService;
+import jerryc05.unlockme.services.ForegroundService;
 
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 
@@ -40,7 +43,6 @@ public final class MainActivity extends Activity
           REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
   public        ReentrantLock      requestDeviceAdminLock;
-  public static Context            applicationContext;
   public static ThreadPoolExecutor threadPoolExecutor;
 
   @Override
@@ -48,18 +50,25 @@ public final class MainActivity extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    applicationContext = getApplicationContext();
     findViewById(R.id.activity_main_button_front)
-            .setOnClickListener(this);
+            .setOnClickListener(MainActivity.this);
     findViewById(R.id.activity_main_button_back)
-            .setOnClickListener(this);
+            .setOnClickListener(MainActivity.this);
     findViewById(R.id.activity_main_button_stopService)
-            .setOnClickListener(this);
+            .setOnClickListener(MainActivity.this);
 
-    final CheckBox forceAPI1 =
-            findViewById(R.id.activity_main_api1CheckBox);
+    final Switch forceAPI1 =
+            findViewById(R.id.activity_main_api1Switch);
     forceAPI1.setOnCheckedChangeListener(MainActivity.this);
-    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2(this));
+    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2(
+            MainActivity.this));
+
+    getThreadPoolExecutor().execute(new Runnable() {
+      @Override
+      public void run() {
+        checkUpdate();
+      }
+    });
   }
 
   @Override
@@ -72,7 +81,6 @@ public final class MainActivity extends Activity
         if (requestDeviceAdminLock != null)
           requestDeviceAdminLock.lock();
         DeviceAdminHelper.requestPermission(MainActivity.this);
-        checkUpdate();
       }
     });
   }
@@ -116,24 +124,32 @@ public final class MainActivity extends Activity
 
   @Override
   public void onClick(View view) {
-    final int id = view.getId();
+    threadPoolExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        final int id = view.getId();
+        final Intent mIntent = new Intent(MainActivity.this,
+                ForegroundService.class);
 
-    if (id == R.id.activity_main_button_stopService)
-      stopService(new Intent(
-              this, ForegroundIntentService.class));
-    else
-      threadPoolExecutor.execute(new Runnable() {
-        @Override
-        public void run() {
-          CameraBaseAPIClass.getImageFromDefaultCamera(MainActivity.this,
-                  view.getId() == R.id.activity_main_button_front);
+        if (id == R.id.activity_main_button_stopService)
+          stopService(mIntent);
+
+        else if (CameraBaseAPIClass.requestPermissions(
+                MainActivity.this)) {
+
+          CameraBaseAPIClass.isFront = id == R.id.activity_main_button_front;
+          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            startService(mIntent);
+          else
+            startForegroundService(mIntent);
         }
-      });
+      }
+    });
   }
 
   @Override
   public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-    if (compoundButton.getId() == R.id.activity_main_api1CheckBox)
+    if (compoundButton.getId() == R.id.activity_main_api1Switch)
       getSharedPreferences(CameraBaseAPIClass.SP_NAME_CAMERA,
               Context.MODE_PRIVATE).edit()
               .putBoolean(SP_KEY_PREFER_CAMERA_API_2, !b)
@@ -166,16 +182,16 @@ public final class MainActivity extends Activity
   }
 
   void checkUpdate() {
-    final String
-            URL = "https://api.github.com/repos/jerryc05/UnlockMe/tags";
     URLConnectionBuilder connectionBuilder = null;
     try {
+      final String
+              URL = "https://api.github.com/repos/jerryc05/UnlockMe/tags";
       connectionBuilder = URLConnectionBuilder
               .get(URL)
               .setConnectTimeout(1000)
               .setReadTimeout(1000)
               .setUseCache(false)
-              .connect();
+              .connect(this);
 
       final String latest = new JSONArray(
               connectionBuilder.getResult()).getJSONObject(0)
@@ -185,6 +201,7 @@ public final class MainActivity extends Activity
         runOnUiThread(new Runnable() {
           @Override
           public void run() {
+            final String URL = "https://github.com/jerryc05/UnlockMe/releases/tag/v";
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("New Version Available")
                     .setMessage("Do you want to upgrade from " +
@@ -195,7 +212,7 @@ public final class MainActivity extends Activity
                               public void onClick(DialogInterface dialogInterface,
                                                   int i) {
                                 startActivity(new Intent(Intent.ACTION_VIEW,
-                                        Uri.parse(URL + "/tag/v" + latest)));
+                                        Uri.parse(URL + latest)));
                               }
                             })
                     .setNegativeButton("NO", null)

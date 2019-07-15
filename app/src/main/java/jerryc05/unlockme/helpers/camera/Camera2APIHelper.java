@@ -31,7 +31,7 @@ import jerryc05.unlockme.helpers.UserInterface;
 
 @SuppressWarnings({"NullableProblems", "WeakerAccess"})
 @SuppressLint("NewApi")
-abstract class Camera2APIHelper extends CameraBaseAPIClass {
+final class Camera2APIHelper extends CameraBaseAPIClass {
 
   static final   String                               TAG =
           Camera2APIHelper.class.getSimpleName();
@@ -236,6 +236,8 @@ abstract class Camera2APIHelper extends CameraBaseAPIClass {
                       : getBackOrientationsMap()).get(
                       ((Activity) context).getWindowManager()
                               .getDefaultDisplay().getRotation()));
+    else
+      mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,270);
 
     return mCaptureRequestBuilder.build();
   }

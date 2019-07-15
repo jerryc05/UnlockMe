@@ -10,11 +10,15 @@ import android.content.Intent;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jerryc05.unlockme.MainActivity;
+import jerryc05.unlockme.activities.MainActivity;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
-public abstract class DeviceAdminHelper {
+import static android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION;
+import static android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN;
+import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_DEVICE_ADMIN;
+
+public final class DeviceAdminHelper {
 
   private static final String        deviceAdminPermissionExplanation =
           "We need DEVICE ADMIN permission to work properly.";
@@ -26,19 +30,20 @@ public abstract class DeviceAdminHelper {
       activity.requestDeviceAdminLock = null;
     }
 
-    if (!getDevicePolicyManager().isAdminActive(getComponentName())) {
+    if (!getDevicePolicyManager(activity).isAdminActive(
+            getComponentName(activity))) {
       final Intent intentDeviceAdmin = new Intent(
               DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-      intentDeviceAdmin.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
+      intentDeviceAdmin.putExtra(EXTRA_DEVICE_ADMIN,
               mComponentName);
-      intentDeviceAdmin.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+      intentDeviceAdmin.putExtra(EXTRA_ADD_EXPLANATION,
               deviceAdminPermissionExplanation);
 
       activity.runOnUiThread(new Runnable() {
         @Override
         public void run() {
           activity.startActivityForResult(intentDeviceAdmin,
-                  MainActivity.REQUEST_CODE_DEVICE_ADMIN);
+                  REQUEST_CODE_DEVICE_ADMIN);
         }
       });
     } else
@@ -46,7 +51,8 @@ public abstract class DeviceAdminHelper {
   }
 
   public static void onRequestPermissionFinished(MainActivity activity) {
-    if (!getDevicePolicyManager().isAdminActive(getComponentName())) {
+    if (!getDevicePolicyManager(activity).isAdminActive(
+            getComponentName(activity))) {
       if (activity.requestDeviceAdminLock == null)
         activity.requestDeviceAdminLock = new ReentrantLock();
       activity.requestDeviceAdminLock.lock();
@@ -71,16 +77,14 @@ public abstract class DeviceAdminHelper {
       mComponentName = null;
   }
 
-  private static DevicePolicyManager getDevicePolicyManager() {
+  private static DevicePolicyManager getDevicePolicyManager(final Context context) {
     return (DevicePolicyManager) Objects.requireNonNull(
-            MainActivity.applicationContext
-                    .getSystemService(Context.DEVICE_POLICY_SERVICE));
+           context.getSystemService(Context.DEVICE_POLICY_SERVICE));
   }
 
-  private static ComponentName getComponentName() {
+  private static ComponentName getComponentName(final Context context) {
     if (mComponentName == null)
-      mComponentName = new ComponentName(
-              MainActivity.applicationContext, MyDeviceAdminReceiver.class);
+      mComponentName = new ComponentName(context, MyDeviceAdminReceiver.class);
     return mComponentName;
   }
 }

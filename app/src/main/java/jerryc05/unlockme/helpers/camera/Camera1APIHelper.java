@@ -3,18 +3,23 @@ package jerryc05.unlockme.helpers.camera;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.Camera.CameraInfo;
 import android.os.Build;
+import android.util.Log;
 
+import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
 
-abstract class Camera1APIHelper extends CameraBaseAPIClass {
+final class Camera1APIHelper extends CameraBaseAPIClass {
 
+  private static String                 TAG =
+          Camera1APIHelper.class.getSimpleName();
   private static int                    predefinedFacing;
   private static int                    cameraID;
   private static Camera                 mCamera;
   private static Camera.PictureCallback mJpegPictureCallback;
 
-  static void getImage(final int facing,final Context context) {
+  static void getImage(final int facing, final Context context) {
     predefinedFacing = facing;
     setupCamera1();
     openCamera1(context);
@@ -22,8 +27,8 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
   }
 
   private static void setupCamera1() {
-    final int         numberOfCameras = Camera.getNumberOfCameras();
-    Camera.CameraInfo cameraInfo      = new Camera.CameraInfo();
+    final int        numberOfCameras = Camera.getNumberOfCameras();
+    final CameraInfo cameraInfo      = new CameraInfo();
 
     for (int i = 0; i < numberOfCameras; i++) {
       Camera.getCameraInfo(i, cameraInfo);
@@ -35,6 +40,9 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
   }
 
   private static void openCamera1(final Context context) {
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "openCamera1: ");
+
     try {
       mCamera = Camera.open(cameraID);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -54,7 +62,7 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
 //      mCamera.setParameters(mCameraParameters);
     } catch (Exception e) {
       UserInterface.showExceptionToNotification(
-              e.toString(), "openCamera1()",context);
+              e.toString(), "openCamera1()", context);
     }
   }
 
@@ -68,7 +76,7 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
     } catch (Exception e) {
       closeCamera1(mCamera);
       UserInterface.showExceptionToNotification(
-              e.toString(), "captureCamera1()",context);
+              e.toString(), "captureCamera1()", context);
     }
   }
 
@@ -79,7 +87,7 @@ abstract class Camera1APIHelper extends CameraBaseAPIClass {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
           closeCamera1(camera);
-          saveImageToDisk(data,context);
+          saveImageToDisk(data, context);
         }
       };
     return mJpegPictureCallback;
