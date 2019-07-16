@@ -95,6 +95,9 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
 
   @SuppressWarnings("WeakerAccess")
   static void closeCamera1(Camera camera) {
+    if(BuildConfig.DEBUG)
+      Log.d(TAG, "closeCamera1: ");
+
     camera.stopPreview();
     camera.release();
     mCamera = null;

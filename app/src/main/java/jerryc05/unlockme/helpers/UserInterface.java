@@ -18,6 +18,7 @@ import jerryc05.unlockme.R;
 import jerryc05.unlockme.services.ForegroundService;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
+import static jerryc05.unlockme.services.ForegroundService.ACTION_UPDATE_NOTIFICATION;
 
 /**
  * A collection class for commonly used User Interface methods.
@@ -103,7 +104,7 @@ public final class UserInterface {
     final String title = "Picture Taken";
 
     final Intent intent = new Intent(context, ForegroundService.class);
-    intent.setAction(ForegroundService.ACTION_UPDATE_NOTIFICATION);
+    intent.setAction(ACTION_UPDATE_NOTIFICATION);
 
     final PendingIntent pendingIntent;
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)

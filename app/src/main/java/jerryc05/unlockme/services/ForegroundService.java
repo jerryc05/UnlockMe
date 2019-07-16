@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
+import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
 import static jerryc05.unlockme.helpers.UserInterface.notifyToForegroundService;
@@ -25,10 +26,6 @@ public class ForegroundService extends Service {
           "ACTION_UPDATE_NOTIFICATION";
   private             ThreadPoolExecutor threadPoolExecutor;
   MyDeviceAdminReceiver myDeviceAdminReceiver;
-
-//  public ForegroundService() {
-//    super("ForegroundService");
-//  }
 
   @Override
   public void onCreate() {
@@ -54,17 +51,21 @@ public class ForegroundService extends Service {
     });
   }
 
-//  @Override
-//  protected void onHandleIntent(Intent intent) {
-//    if (BuildConfig.DEBUG)
-//      Log.d(TAG, "onHandleIntent: ");
-//
-//    if (ACTION_UPDATE_NOTIFICATION.equals(intent.getAction()))
-//      UserInterface.notifyToForegroundService(this);//todo
-//    else
-//      CameraBaseAPIClass.getImageFromDefaultCamera(
-//              this, true);
-//  }
+  @Override
+  public int onStartCommand(Intent intent, int flags, int startId) {
+    threadPoolExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        if (ACTION_UPDATE_NOTIFICATION.equals(intent.getAction()))
+          UserInterface.notifyToForegroundService(ForegroundService.this);
+        else
+          CameraBaseAPIClass.getImageFromDefaultCamera(
+                  ForegroundService.this, true);
+      }
+    });
+
+    return super.onStartCommand(intent, flags, startId);
+  }
 
   private ThreadPoolExecutor getThreadPoolExecutor() {
     if (threadPoolExecutor == null) {

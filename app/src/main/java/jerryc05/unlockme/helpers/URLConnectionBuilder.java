@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import javax.net.ssl.HttpsURLConnection;
 
 import jerryc05.unlockme.BuildConfig;
-import jerryc05.unlockme.activities.MainActivity;
 
 /**
  * A builder for URLConnection class.
