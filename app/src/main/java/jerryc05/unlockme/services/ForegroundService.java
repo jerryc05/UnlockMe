@@ -17,6 +17,7 @@ import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
 import static jerryc05.unlockme.helpers.UserInterface.notifyToForegroundService;
+import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.getImageFromDefaultCamera;
 
 public class ForegroundService extends Service {
 
@@ -57,9 +58,9 @@ public class ForegroundService extends Service {
       @Override
       public void run() {
         if (ACTION_UPDATE_NOTIFICATION.equals(intent.getAction()))
-          UserInterface.notifyToForegroundService(ForegroundService.this);
+          notifyToForegroundService(ForegroundService.this);
         else
-          CameraBaseAPIClass.getImageFromDefaultCamera(
+          getImageFromDefaultCamera(
                   ForegroundService.this, true);
       }
     });

@@ -47,19 +47,6 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
       mCamera = Camera.open(cameraID);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
         mCamera.enableShutterSound(false);
-
-//      final Camera.Parameters mCameraParameters = mCamera.getParameters();
-//      final List<Camera.Size> sizes             = mCameraParameters.getSupportedPictureSizes();
-//      final Camera.Size mSize = Collections.max(sizes, new Comparator<Camera.Size>() {
-//        @Override
-//        public int compare(Camera.Size prev, Camera.Size next) {
-//          final int width = prev.width - next.width;
-//          return width != 0 ? width
-//                  : prev.height - next.height;
-//        }
-//      });
-//      mCameraParameters.setPictureSize(mSize.width, mSize.height);
-//      mCamera.setParameters(mCameraParameters);
     } catch (Exception e) {
       UserInterface.showExceptionToNotification(
               e.toString(), "openCamera1()", context);
@@ -70,8 +57,12 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
     try {
       mCamera.setPreviewTexture(new SurfaceTexture(-1));
       mCamera.startPreview();
-      mCamera.takePicture(null, null,
-              getJpegPictureCallback(context));
+
+      for (int i = 0; i < imageCount; i++) {
+        mCamera.takePicture(null, null,
+                getJpegPictureCallback(context));
+        Thread.sleep(100);
+      }
 
     } catch (Exception e) {
       closeCamera1(mCamera);
@@ -95,7 +86,7 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
 
   @SuppressWarnings("WeakerAccess")
   static void closeCamera1(Camera camera) {
-    if(BuildConfig.DEBUG)
+    if (BuildConfig.DEBUG)
       Log.d(TAG, "closeCamera1: ");
 
     camera.stopPreview();

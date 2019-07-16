@@ -33,6 +33,7 @@ public abstract class CameraBaseAPIClass {
   private static final boolean canUseCamera2 =
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
   public static        boolean isFront       = true;
+  static               int     imageCount    = 5;
 
   @SuppressWarnings("unused")
   public static void getImageFromDefaultCamera(final Context context,

@@ -183,8 +183,12 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
             Log.d(TAG, "mCaptureStillImageStateCallback#onConfigured: ");
           try {
             mCameraCaptureSession = cameraCaptureSession;
-            cameraCaptureSession.capture(getStillImageCaptureRequest(context),
-                    getCaptureCallback(), null);
+
+            for (int i = 0; i < imageCount; i++) {
+              cameraCaptureSession.capture(getStillImageCaptureRequest(context),
+                      getCaptureCallback(), null);
+              Thread.sleep(100);
+            }
 
           } catch (final Exception e) {
             UserInterface.showExceptionToNotification(e.toString(),
@@ -237,7 +241,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
                       ((Activity) context).getWindowManager()
                               .getDefaultDisplay().getRotation()));
     else
-      mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,270);
+      mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, 270);
 
     return mCaptureRequestBuilder.build();
   }
@@ -295,34 +299,6 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
           if (BuildConfig.DEBUG)
             Log.d(TAG, "mCaptureCallback#onCaptureCompleted: ");
 
-//          final CaptureRequest.Builder mCaptureRequestBuilder;
-//          try {
-//            mCaptureRequestBuilder = mCameraDevice
-//                    .createCaptureRequest(CameraDevice.TEMPLATE_MANUAL);
-//            mCaptureRequestBuilder.set(
-//                    CaptureRequest.CONTROL_AE_MODE,
-//                    CaptureRequest.CONTROL_AE_MODE_OFF
-//            );
-//            mCaptureRequestBuilder.set(
-//                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-//                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE
-//            );
-//            mCaptureRequestBuilder.set(
-//                    CaptureRequest.CONTROL_AF_MODE,
-//                    CameraMetadata.CONTROL_AF_MODE_OFF
-//            );
-//            mCaptureRequestBuilder.set(
-//                    CaptureRequest.CONTROL_AF_TRIGGER,
-//                    CameraMetadata.CONTROL_AF_TRIGGER_CANCEL
-//            );
-////            mCaptureRequestBuilder.addTarget(getCaptureImageReader().getSurface());
-//            mCaptureRequestBuilder.addTarget(getPreviewImageReader().getSurface());
-//
-//            session.capture(mCaptureRequestBuilder.build(),
-//                    null, null);
-//          } catch (Exception e) {
-//            UserInterface.showExceptionToDialog(activity, e);
-//          }
           closeCamera2();
         }
       };
