@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
@@ -15,6 +16,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Looper;
 import android.util.Log;
 import android.util.Size;
@@ -33,25 +35,26 @@ import jerryc05.unlockme.helpers.UserInterface;
 @SuppressLint("NewApi")
 final class Camera2APIHelper extends CameraBaseAPIClass {
 
-  static final   String                               TAG =
+  static final   String                             TAG          =
           Camera2APIHelper.class.getSimpleName();
-  private static int                                  predefinedFacing;
-  static         String                               cameraID;
-  static         CameraManager                        mCameraManager;
-  static         CameraDevice                         mCameraDevice;
-  private static CameraCharacteristics                mCameraCharacteristics;
-  static         CameraCaptureSession                 mCameraCaptureSession;
-  static         CameraDevice.StateCallback           openCameraStateCallback;
-  private static SparseIntArray                       orientationsMap;
-  private static ImageReader                          mImageReader;
-  private static CameraCaptureSession.CaptureCallback mCaptureCallback;
-  private static ImageReader.OnImageAvailableListener onImageAvailableListener;
-  private static CameraCaptureSession.StateCallback   mStateCallback;
+  private static int                                predefinedFacing;
+  static         String                             cameraID;
+  static         CameraManager                      mCameraManager;
+  static         CameraDevice                       mCameraDevice;
+  private static CameraCharacteristics              mCameraCharacteristics;
+  static         CameraCaptureSession               mCameraCaptureSession;
+  static         CameraDevice.StateCallback         openCameraStateCallback;
+  private static SparseIntArray                     orientationsMap;
+  private static ImageReader                        mImageReader;
+  private static CaptureCallback                    mCaptureCallback;
+  private static OnImageAvailableListener           onImageAvailableListener;
+  private static CameraCaptureSession.StateCallback mStateCallback;
+  static         int                                captureCount = 0;
 
   public static void getImage(final int facing, final Context context) {
     predefinedFacing = facing;
     setupCamera2(context);
-    openCamera2AndCapture(context);
+    openCamera2(context);
   }
 
   private static void setupCamera2(final Context context) {
@@ -119,7 +122,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
   }
 
   @SuppressLint("MissingPermission")
-  private static void openCamera2AndCapture(final Context context) {
+  private static void openCamera2(final Context context) {
     if (requestPermissions(context))
       try {
         if (Looper.myLooper() == null)
@@ -129,7 +132,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
         Looper.loop();
       } catch (final Exception e) {
         UserInterface.showExceptionToNotification(e.toString(),
-                "openCamera2AndCapture()", context);
+                "openCamera2()", context);
       }
   }
 
@@ -181,20 +184,9 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
         public void onConfigured(CameraCaptureSession cameraCaptureSession) {
           if (BuildConfig.DEBUG)
             Log.d(TAG, "mCaptureStillImageStateCallback#onConfigured: ");
-          try {
-            mCameraCaptureSession = cameraCaptureSession;
 
-            for (int i = 0; i < imageCount; i++) {
-              cameraCaptureSession.capture(getStillImageCaptureRequest(context),
-                      getCaptureCallback(), null);
-              Thread.sleep(100);
-            }
-
-          } catch (final Exception e) {
-            UserInterface.showExceptionToNotification(e.toString(),
-                    "mCaptureStillImageStateCallback#onConfigured()",
-                    context);
-          }
+          mCameraCaptureSession = cameraCaptureSession;
+          captureCamera2(context);
         }
 
         @Override
@@ -203,11 +195,23 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
                   "CameraCaptureSession#StateCallBack() returns " +
                           "onConfigureFailed()",
                   "mCaptureStillImageStateCallback#onConfigureFailed()",
-                  context)
-          ;
+                  context);
         }
       };
     return mStateCallback;
+  }
+
+  static void captureCamera2(final Context context) {
+    try {
+      mCameraCaptureSession.capture(getStillImageCaptureRequest(context),
+              getCaptureCallback(context), null);
+      captureCount++;
+
+    } catch (final Exception e) {
+      UserInterface.showExceptionToNotification(e.toString(),
+              "mCaptureStillImageStateCallback#onConfigured()",
+              context);
+    }
   }
 
   static CaptureRequest getStillImageCaptureRequest(final Context context)
@@ -267,10 +271,10 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
     return orientationsMap;
   }
 
-  private static ImageReader.OnImageAvailableListener getOnImageAvailableListener(
+  private static OnImageAvailableListener getOnImageAvailableListener(
           final Context context) {
     if (onImageAvailableListener == null)
-      onImageAvailableListener = new ImageReader.OnImageAvailableListener() {
+      onImageAvailableListener = new OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader imageReader) {
           if (BuildConfig.DEBUG)
@@ -287,9 +291,9 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
     return onImageAvailableListener;
   }
 
-  static CameraCaptureSession.CaptureCallback getCaptureCallback() {
+  static CaptureCallback getCaptureCallback(final Context context) {
     if (mCaptureCallback == null)
-      mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
+      mCaptureCallback = new CaptureCallback() {
         @Override
         public void onCaptureCompleted(CameraCaptureSession session,
                                        CaptureRequest request,
@@ -299,7 +303,12 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
           if (BuildConfig.DEBUG)
             Log.d(TAG, "mCaptureCallback#onCaptureCompleted: ");
 
-          closeCamera2();
+          if (captureCount < imageCount)
+            captureCamera2(context);
+          else {
+            captureCount = 0;
+            closeCamera2();
+          }
         }
       };
     return mCaptureCallback;

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
+import android.hardware.Camera.PictureCallback;
 import android.os.Build;
 import android.util.Log;
 
@@ -12,12 +13,16 @@ import jerryc05.unlockme.helpers.UserInterface;
 
 final class Camera1APIHelper extends CameraBaseAPIClass {
 
-  private static String                 TAG =
+  private static String          TAG          =
           Camera1APIHelper.class.getSimpleName();
-  private static int                    predefinedFacing;
-  private static int                    cameraID;
-  private static Camera                 mCamera;
-  private static Camera.PictureCallback mJpegPictureCallback;
+  private static int             predefinedFacing;
+  private static int             cameraID;
+  private static Camera          mCamera;
+  private static PictureCallback mJpegPictureCallback;
+  @SuppressWarnings("WeakerAccess")
+  static         int             captureCount = 0;
+  @SuppressWarnings("WeakerAccess")
+  static         SurfaceTexture  surfaceTexture;
 
   static void getImage(final int facing, final Context context) {
     predefinedFacing = facing;
@@ -53,16 +58,17 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
     }
   }
 
-  private static void captureCamera1(final Context context) {
+  @SuppressWarnings("WeakerAccess")
+  static void captureCamera1(final Context context) {
     try {
-      mCamera.setPreviewTexture(new SurfaceTexture(-1));
+      if (surfaceTexture == null)
+        surfaceTexture =
+                new SurfaceTexture(-1);
+      mCamera.setPreviewTexture(surfaceTexture);
       mCamera.startPreview();
-
-      for (int i = 0; i < imageCount; i++) {
-        mCamera.takePicture(null, null,
-                getJpegPictureCallback(context));
-        Thread.sleep(100);
-      }
+      mCamera.takePicture(null, null,
+              getJpegPictureCallback(context));
+      captureCount++;
 
     } catch (Exception e) {
       closeCamera1(mCamera);
@@ -72,13 +78,24 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
   }
 
   @SuppressWarnings("WeakerAccess")
-  static Camera.PictureCallback getJpegPictureCallback(final Context context) {
+  static PictureCallback getJpegPictureCallback(final Context context) {
     if (mJpegPictureCallback == null)
-      mJpegPictureCallback = new Camera.PictureCallback() {
+      mJpegPictureCallback = new PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-          closeCamera1(camera);
           saveImageToDisk(data, context);
+
+          if (captureCount < imageCount)
+            captureCamera1(context);
+          else {
+            captureCount = 0;
+            if (surfaceTexture != null) {
+              surfaceTexture.release();
+              surfaceTexture = null;
+            }
+            closeCamera1(camera);
+          }
+
         }
       };
     return mJpegPictureCallback;
