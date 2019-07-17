@@ -27,17 +27,18 @@ import java.util.Objects;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.UserInterface;
 
-import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL;
+import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_CAMERA;
 
 public abstract class CameraBaseAPIClass {
 
   public static final String
           SP_NAME_CAMERA             = "CAMERA",
-          SP_KEY_PREFER_CAMERA_API_2 = "prefer_camera_api_2";
+          SP_KEY_PREFER_CAMERA_API_2 = "prefer_camera_api_2",
+          EXTRA_CAMERA_FACING        = "EXTRA_CAMERA_FACING";
 
   private static final boolean canUseCamera2 =
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-  public static        boolean isFront       = true;
+  private static        boolean isFront       = true;
   @SuppressWarnings("CanBeFinal")
   static               int     imageCount    = 5;
 
@@ -104,17 +105,14 @@ public abstract class CameraBaseAPIClass {
 
     if (context instanceof Activity)
       if (((Activity) context).shouldShowRequestPermissionRationale(
-              Manifest.permission.CAMERA) ||
-              ((Activity) context).shouldShowRequestPermissionRationale(
-                      Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+              Manifest.permission.CAMERA)) {
 
         ((Activity) context).runOnUiThread(new Runnable() {
           @Override
           public void run() {
             new AlertDialog.Builder(context)
                     .setTitle("Permission Required")
-                    .setMessage("We need the following permissions to work properly:\n\n" +
-                            "-\t\tCAMERA\n-\t\tWRITE_EXTERNAL_STORAGE")
+                    .setMessage("We need CAMERA permissions to work properly!")
                     .setIcon(R.drawable.ic_round_warning_24px)
                     .setCancelable(false)
                     .setPositiveButton("OK",
@@ -125,7 +123,7 @@ public abstract class CameraBaseAPIClass {
         });
       } else
         ((Activity) context).requestPermissions(getPermissionsArray(),
-                REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
+                REQUEST_CODE_CAMERA);
 
     return false;
   }
@@ -139,7 +137,7 @@ public abstract class CameraBaseAPIClass {
       public void onClick(DialogInterface dialogInterface,
                           int i) {
         activity.requestPermissions(getPermissionsArray(),
-                REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
+                REQUEST_CODE_CAMERA);
       }
     };
   }
@@ -155,8 +153,8 @@ public abstract class CameraBaseAPIClass {
             grantResults[0] == PackageManager.PERMISSION_GRANTED;
 
     final String granted_str = granted
-            ? "Camera and Write External Storage Permissions Granted √"
-            : "Camera or Write External Storage Permissions Denied ×";
+            ? "Camera Permissions Granted √"
+            : "Camera Permissions Denied ×";
     Toast.makeText(activity, granted_str, Toast.LENGTH_SHORT).show();
 
     if (granted)
@@ -170,13 +168,13 @@ public abstract class CameraBaseAPIClass {
             Locale.getDefault()).format(new Date()),
             fileName = "UnlockMe_" + timeFormat + ".jpg";
 
-    // todo
+    // todo folder name in /picture
 
     UserInterface.notifyPictureToUI(fileName, data, context);
 
     final ContentValues values = new ContentValues();
     values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
-    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg"); // todo file name
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
       values.put(MediaStore.Images.Media.IS_PENDING, 1);
 

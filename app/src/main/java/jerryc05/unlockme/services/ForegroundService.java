@@ -6,6 +6,7 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -16,15 +17,17 @@ import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
 import static jerryc05.unlockme.helpers.UserInterface.notifyToForegroundService;
+import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.getImageFromDefaultCamera;
 
 public class ForegroundService extends Service {
 
-  private static final String             TAG                        =
-          ForegroundService.class.getSimpleName();
-  public static final  String             ACTION_UPDATE_NOTIFICATION =
-          "ACTION_UPDATE_NOTIFICATION";
-  private              ThreadPoolExecutor threadPoolExecutor;
+  static final        String
+          TAG                        = ForegroundService.class.getSimpleName();
+  public static final String
+          ACTION_UPDATE_NOTIFICATION = "ACTION_UPDATE_NOTIFICATION",
+          ACTION_CAPTURE_IMAGE       = "ACTION_CAPTURE_IMAGE";
+  private ThreadPoolExecutor threadPoolExecutor;
   MyDeviceAdminReceiver myDeviceAdminReceiver;
 
   @Override
@@ -56,12 +59,23 @@ public class ForegroundService extends Service {
     threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
-        if (intent != null &&
-                ACTION_UPDATE_NOTIFICATION.equals(intent.getAction()))
-          notifyToForegroundService(ForegroundService.this);
-        else
-          getImageFromDefaultCamera(
-                  ForegroundService.this, true);
+        try {
+          switch (Objects.requireNonNull(intent.getAction())) {
+            case ACTION_UPDATE_NOTIFICATION:
+              notifyToForegroundService(ForegroundService.this);
+              break;
+            case ACTION_CAPTURE_IMAGE:
+              getImageFromDefaultCamera(ForegroundService.this,
+                      intent.getBooleanExtra(
+                              EXTRA_CAMERA_FACING, true));
+              break;
+            default:
+              throw new UnsupportedOperationException("Unknown action!");
+          }
+        } catch (Exception e) {
+          UserInterface.showExceptionToNotification(e.toString(),
+                  "onStartCommand()", ForegroundService.this);
+        }
       }
     });
 
@@ -78,7 +92,7 @@ public class ForegroundService extends Service {
           UserInterface.showExceptionToNotificationNoRethrow(
                   "ThreadPoolExecutor：\n>>> "
                           + threadPoolExecutor.toString()
-                          + "\non MainActivity rejected:\n >>> "
+                          + "\non " + TAG + " rejected:\n >>> "
                           + runnable.toString(),
                   "threadPoolExecutor#rejectedExecution()",
                   ForegroundService.this);

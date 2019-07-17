@@ -36,8 +36,6 @@ import static jerryc05.unlockme.services.ForegroundService.ACTION_UPDATE_NOTIFIC
  */
 public final class UserInterface {
 
-  private static NotificationManager notificationManager;
-
   @SuppressWarnings("unused")
   public static void showExceptionToDialog(final Context context, final Exception e) {
     if (context == null)
@@ -89,15 +87,14 @@ public final class UserInterface {
             .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
             .setSubText(subText)
             .setStyle(new Notification.BigTextStyle()
-                    .bigText(contentText));
+                    .bigText(contentText))
+            .setContentIntent(getUpdateNotificationPendingIntent(context));
 
-    //todo pendingintent
-
-    getNotificationManager(context).notify(-1, setNotificationChannel(builder,
-            getNotificationManager(context),
-            "Crash Report",
-            "Crash report notification channel for UnlockMe",
-            true).build());
+    getNotificationManager(context).notify(title.hashCode(),
+            setNotificationChannel(builder, getNotificationManager(context),
+                    "Crash Report",
+                    "Crash report notification channel for UnlockMe",
+                    true).build());
   }
 
   @SuppressWarnings("unused")
@@ -105,17 +102,6 @@ public final class UserInterface {
                                        final byte[] bytes,
                                        final Context context) {
     final String title = "Picture Taken";
-
-    final Intent intent = new Intent(context, ForegroundService.class);
-    intent.setAction(ACTION_UPDATE_NOTIFICATION);
-
-    final PendingIntent pendingIntent;
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-      pendingIntent = PendingIntent.getService(context,
-              -1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    else
-      pendingIntent = PendingIntent.getForegroundService(context,
-              -1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
     final Builder builder = new Builder(context)
             .setContentTitle(title)
@@ -125,13 +111,31 @@ public final class UserInterface {
             .setStyle(new Notification.BigPictureStyle()
                     .bigPicture(BitmapFactory.decodeByteArray(
                             bytes, 0, bytes.length)))
-            .setContentIntent(pendingIntent);
+            .setContentIntent(getUpdateNotificationPendingIntent(context));
 
-    getNotificationManager(context).notify(-1, setNotificationChannel(builder,
-            getNotificationManager(context),
-            "Image Captured Report",
-            "Image captured report notification channel for UnlockMe",
-            false).build());
+    getNotificationManager(context).notify(title.hashCode(),
+            setNotificationChannel(builder, getNotificationManager(context),
+                    "Image Captured Report",
+                    "Image captured report notification channel for UnlockMe",
+                    false).build());
+  }
+
+  private static PendingIntent getUpdateNotificationPendingIntent(
+          final Context context) {
+
+    final Intent intent = new Intent(context, ForegroundService.class);
+    intent.setAction(ACTION_UPDATE_NOTIFICATION);
+
+    final PendingIntent pendingIntent;
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+      pendingIntent = PendingIntent.getService(context,
+              ForegroundService.class.getSimpleName().hashCode(),
+              intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    else
+      pendingIntent = PendingIntent.getForegroundService(context,
+              ForegroundService.class.getSimpleName().hashCode(),
+              intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    return pendingIntent;
   }
 
   public static void notifyToForegroundService(final Service service) {
@@ -142,11 +146,11 @@ public final class UserInterface {
             .setSmallIcon(
                     R.drawable.ic_launcher_smartphone_lock_foreground);
 
-    service.startForeground(-1, UserInterface.setNotificationChannel(
-            builder,
-            getNotificationManager(service), title,
-            "Background service notification for UnlockMe.",
-            true).build());
+    service.startForeground(title.hashCode(),
+            UserInterface.setNotificationChannel(builder,
+                    getNotificationManager(service), title,
+                    "Background service notification for UnlockMe.",
+                    true).build());
   }
 
   @SuppressWarnings("unused")
@@ -159,11 +163,11 @@ public final class UserInterface {
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground);
 
-    getNotificationManager(context).notify(-1, setNotificationChannel(
-            builder, getNotificationManager(context),
-            "UnlockMe Notification Channel",
-            "Regular notification channel for UnlockMe",
-            true).build());
+    getNotificationManager(context).notify(title.hashCode(),
+            setNotificationChannel(builder, getNotificationManager(context),
+                    "UnlockMe Notification Channel",
+                    "Regular notification channel for UnlockMe",
+                    true).build());
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -202,9 +206,7 @@ public final class UserInterface {
 
   @SuppressWarnings("WeakerAccess")
   static NotificationManager getNotificationManager(Context context) {
-    if (notificationManager == null)
-      notificationManager = (NotificationManager)
-              context.getSystemService(NOTIFICATION_SERVICE);
-    return notificationManager;
+    return (NotificationManager)
+            context.getSystemService(NOTIFICATION_SERVICE);
   }
 }

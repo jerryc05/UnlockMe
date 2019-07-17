@@ -11,6 +11,8 @@ import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.services.ForegroundService;
 
+import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
+
 @SuppressWarnings("NullableProblems")
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
@@ -19,23 +21,21 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
   private static       int    failedAttempt;
 
   @Override
-  public void onPasswordFailed(Context context, Intent intent, UserHandle user) {
-    super.onPasswordFailed(context, intent);
+  public void onPasswordFailed(Context context, Intent failedIntent, UserHandle user) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onPasswordFailed: ");
 
-    final Intent mIntent = new Intent(context,
+    final Intent serviceIntent = new Intent(context,
             ForegroundService.class);
+    serviceIntent.setAction(ACTION_CAPTURE_IMAGE);
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-      context.startService(mIntent);
+      context.startService(serviceIntent);
     else
-      context.startForegroundService(mIntent);
+      context.startForegroundService(serviceIntent);
   }
 
   @Override
   public void onPasswordSucceeded(Context context, Intent intent, UserHandle user) {
-    super.onPasswordSucceeded(context, intent, user);
-
     if (failedAttempt > 0) {
       UserInterface.notifyToUI("Unsuccessful Unlock Attempt Captured",
               "UnlockMe captured " + failedAttempt +

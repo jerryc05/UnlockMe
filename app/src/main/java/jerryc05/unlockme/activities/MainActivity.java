@@ -32,17 +32,19 @@ import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 import jerryc05.unlockme.services.ForegroundService;
 
+import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
+import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
 
 @SuppressWarnings("NullableProblems")
 public final class MainActivity extends Activity
         implements OnClickListener, OnCheckedChangeListener {
 
-  private final static String
-          TAG                                    = MainActivity.class.getSimpleName();
-  public final static  int
-          REQUEST_CODE_DEVICE_ADMIN              = 0,
-          REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
+  final static        String
+          TAG                       = MainActivity.class.getSimpleName();
+  public final static int
+          REQUEST_CODE_DEVICE_ADMIN = 0,
+          REQUEST_CODE_CAMERA       = 1;
 
   public        ReentrantLock      requestDeviceAdminLock;
   public static ThreadPoolExecutor threadPoolExecutor;
@@ -114,7 +116,7 @@ public final class MainActivity extends Activity
   public void onRequestPermissionsResult(int requestCode,
                                          String[] permissions,
                                          int[] grantResults) {
-    if (requestCode == REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL)
+    if (requestCode == REQUEST_CODE_CAMERA)
       CameraBaseAPIClass.onRequestPermissionFinished(this, grantResults);
   }
 
@@ -124,19 +126,21 @@ public final class MainActivity extends Activity
       @Override
       public void run() {
         final int id = view.getId();
-        final Intent mIntent = new Intent(MainActivity.this,
+        final Intent intent = new Intent(MainActivity.this,
                 ForegroundService.class);
 
         if (id == R.id.activity_main_button_stopService)
-          stopService(mIntent);
+          stopService(intent);
 
         else if (CameraBaseAPIClass.requestPermissions(
                 MainActivity.this)) {
-          CameraBaseAPIClass.isFront = id == R.id.activity_main_button_front;
+          intent.setAction(ACTION_CAPTURE_IMAGE);
+          intent.putExtra(EXTRA_CAMERA_FACING,
+                  id == R.id.activity_main_button_front);
           if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            startService(mIntent);
+            startService(intent);
           else
-            startForegroundService(mIntent);
+            startForegroundService(intent);
         }
       }
     });
@@ -161,7 +165,7 @@ public final class MainActivity extends Activity
           UserInterface.showExceptionToNotificationNoRethrow(
                   "ThreadPoolExecutor：\n>>> "
                           + threadPoolExecutor.toString()
-                          + "\non MainActivity rejected:\n >>> "
+                          + "\non " + TAG + " rejected:\n >>> "
                           + runnable.toString(),
                   "threadPoolExecutor#rejectedExecution()",
                   MainActivity.this);
