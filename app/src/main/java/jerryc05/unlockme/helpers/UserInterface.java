@@ -91,6 +91,8 @@ public final class UserInterface {
             .setStyle(new Notification.BigTextStyle()
                     .bigText(contentText));
 
+    //todo pendingintent
+
     getNotificationManager(context).notify(-1, setNotificationChannel(builder,
             getNotificationManager(context),
             "Crash Report",

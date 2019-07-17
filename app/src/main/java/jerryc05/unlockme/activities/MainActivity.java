@@ -199,8 +199,8 @@ public final class MainActivity extends Activity
             final String URL = "https://github.com/jerryc05/UnlockMe/releases/tag/v";
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("New Version Available")
-                    .setMessage("Do you want to upgrade from " +
-                            BuildConfig.VERSION_NAME + "  to  " + latest + '?')
+                    .setMessage("Do you want to upgrade from\n\tv" +
+                            BuildConfig.VERSION_NAME + "  to  v" + latest + '?')
                     .setPositiveButton("YES",
                             new DialogInterface.OnClickListener() {
                               @Override

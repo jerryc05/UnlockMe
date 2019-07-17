@@ -170,6 +170,8 @@ public abstract class CameraBaseAPIClass {
             Locale.getDefault()).format(new Date()),
             fileName = "UnlockMe_" + timeFormat + ".jpg";
 
+    // todo
+
     UserInterface.notifyPictureToUI(fileName, data, context);
 
     final ContentValues values = new ContentValues();
@@ -189,9 +191,10 @@ public abstract class CameraBaseAPIClass {
               "saveImageToDisk()", context);
     }
 
-    values.clear();
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      values.clear();
       values.put(MediaStore.Images.Media.IS_PENDING, 0);
-    resolver.update(item, values, null, null);
+      resolver.update(item, values, null, null);
+    }
   }
 }
