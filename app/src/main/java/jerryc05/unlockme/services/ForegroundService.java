@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
-import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
 import static jerryc05.unlockme.helpers.UserInterface.notifyToForegroundService;
@@ -21,23 +20,23 @@ import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.getImageFromDe
 
 public class ForegroundService extends Service {
 
-  static final        String             TAG                        =
+  private static final String             TAG                        =
           ForegroundService.class.getSimpleName();
-  public static final String             ACTION_UPDATE_NOTIFICATION =
+  public static final  String             ACTION_UPDATE_NOTIFICATION =
           "ACTION_UPDATE_NOTIFICATION";
-  private             ThreadPoolExecutor threadPoolExecutor;
+  private              ThreadPoolExecutor threadPoolExecutor;
   MyDeviceAdminReceiver myDeviceAdminReceiver;
 
   @Override
   public void onCreate() {
     super.onCreate();
 
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onCreate: ");
+
     getThreadPoolExecutor().execute(new Runnable() {
       @Override
       public void run() {
-        if (BuildConfig.DEBUG)
-          Log.d(TAG, "onCreate: ");
-
         notifyToForegroundService(ForegroundService.this);
 
         final IntentFilter intentFilter = new IntentFilter(
@@ -57,7 +56,8 @@ public class ForegroundService extends Service {
     threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
-        if (ACTION_UPDATE_NOTIFICATION.equals(intent.getAction()))
+        if (intent != null &&
+                ACTION_UPDATE_NOTIFICATION.equals(intent.getAction()))
           notifyToForegroundService(ForegroundService.this);
         else
           getImageFromDefaultCamera(

@@ -13,16 +13,16 @@ import jerryc05.unlockme.helpers.UserInterface;
 
 final class Camera1APIHelper extends CameraBaseAPIClass {
 
-  private static String          TAG          =
+  private static final String          TAG          =
           Camera1APIHelper.class.getSimpleName();
-  private static int             predefinedFacing;
-  private static int             cameraID;
-  private static Camera          mCamera;
-  private static PictureCallback mJpegPictureCallback;
+  private static       int             predefinedFacing;
+  private static       int             cameraID;
+  private static       Camera          mCamera;
+  private static       PictureCallback mJpegPictureCallback;
   @SuppressWarnings("WeakerAccess")
-  static         int             captureCount = 0;
+  static               int             captureCount = 0;
   @SuppressWarnings("WeakerAccess")
-  static         SurfaceTexture  surfaceTexture;
+  static               SurfaceTexture  surfaceTexture;
 
   static void getImage(final int facing, final Context context) {
     predefinedFacing = facing;

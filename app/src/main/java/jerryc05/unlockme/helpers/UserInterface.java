@@ -1,5 +1,6 @@
 package jerryc05.unlockme.helpers;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -150,7 +151,7 @@ public final class UserInterface {
   public static void notifyToUI(final String title,
                                 final String contentText,
                                 final Context context) {
-    final Builder builder = new Builder(context)
+    @SuppressLint("IconColors") final Builder builder = new Builder(context)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(contentText)

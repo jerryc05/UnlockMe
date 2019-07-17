@@ -62,13 +62,6 @@ public final class MainActivity extends Activity
     forceAPI1.setOnCheckedChangeListener(MainActivity.this);
     forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2(
             MainActivity.this));
-
-    getThreadPoolExecutor().execute(new Runnable() {
-      @Override
-      public void run() {
-        checkUpdate();
-      }
-    });
   }
 
   @Override
@@ -81,6 +74,7 @@ public final class MainActivity extends Activity
         if (requestDeviceAdminLock != null)
           requestDeviceAdminLock.lock();
         DeviceAdminHelper.requestPermission(MainActivity.this);
+        checkUpdate();
       }
     });
   }
@@ -136,7 +130,6 @@ public final class MainActivity extends Activity
 
         else if (CameraBaseAPIClass.requestPermissions(
                 MainActivity.this)) {
-
           CameraBaseAPIClass.isFront = id == R.id.activity_main_button_front;
           if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             startService(mIntent);
