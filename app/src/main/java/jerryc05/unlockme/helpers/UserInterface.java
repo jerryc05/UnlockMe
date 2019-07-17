@@ -157,8 +157,8 @@ public final class UserInterface {
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground);
 
-    getNotificationManager(context).notify(-1, setNotificationChannel(builder,
-            getNotificationManager(context),
+    getNotificationManager(context).notify(-1, setNotificationChannel(
+            builder, getNotificationManager(context),
             "UnlockMe Notification Channel",
             "Regular notification channel for UnlockMe",
             true).build());

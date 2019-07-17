@@ -10,7 +10,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 
 import org.json.JSONArray;
@@ -34,7 +36,7 @@ import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_
 
 @SuppressWarnings("NullableProblems")
 public final class MainActivity extends Activity
-        implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+        implements OnClickListener, OnCheckedChangeListener {
 
   private final static String
           TAG                                    = MainActivity.class.getSimpleName();

@@ -4,20 +4,25 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.UserInterface;
@@ -93,12 +98,10 @@ public abstract class CameraBaseAPIClass {
                       "requestPermissions() External storage not writable!"));
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            (context.checkSelfPermission(Manifest.permission.CAMERA) ==
-                    PackageManager.PERMISSION_GRANTED &&
-                    context.checkSelfPermission(
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                            PackageManager.PERMISSION_GRANTED))
+            context.checkSelfPermission(Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_GRANTED)
       return true;
+
     if (context instanceof Activity)
       if (((Activity) context).shouldShowRequestPermissionRationale(
               Manifest.permission.CAMERA) ||
@@ -128,9 +131,9 @@ public abstract class CameraBaseAPIClass {
   }
 
   @SuppressWarnings("WeakerAccess")
-  static DialogInterface.OnClickListener getRequestPermissionRationaleOnClickListener(
+  static OnClickListener getRequestPermissionRationaleOnClickListener(
           final Activity activity) {
-    return new DialogInterface.OnClickListener() {
+    return new OnClickListener() {
       @SuppressLint("NewApi")
       @Override
       public void onClick(DialogInterface dialogInterface,
@@ -143,25 +146,19 @@ public abstract class CameraBaseAPIClass {
 
   @SuppressWarnings("WeakerAccess")
   static String[] getPermissionsArray() {
-    return new String[]{
-            Manifest.permission.CAMERA,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    return new String[]{Manifest.permission.CAMERA};
   }
 
   public static void onRequestPermissionFinished(final Activity activity,
                                                  final int[] grantResults) {
-    boolean granted = true;
-    if (grantResults.length > 0)
-      for (int result : grantResults)
-        if (result != PackageManager.PERMISSION_GRANTED) {
-          granted = false;
-          break;
-        }
+    final boolean granted = grantResults.length > 0 &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED;
 
     final String granted_str = granted
             ? "Camera and Write External Storage Permissions Granted √"
             : "Camera or Write External Storage Permissions Denied ×";
     Toast.makeText(activity, granted_str, Toast.LENGTH_SHORT).show();
+
     if (granted)
       getImageFromDefaultCamera(activity, isFront);
   }
@@ -171,24 +168,30 @@ public abstract class CameraBaseAPIClass {
     final String
             timeFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS",
             Locale.getDefault()).format(new Date()),
-            dirName = Environment.getExternalStorageDirectory() + "/UnlockMe/",
             fileName = "UnlockMe_" + timeFormat + ".jpg";
 
     UserInterface.notifyPictureToUI(fileName, data, context);
-    final File
-            dir = new File(dirName),
-            file = new File(dir, fileName);
 
-    if (!dir.isDirectory() && !dir.mkdirs())
-      UserInterface.showExceptionToNotification(
-              "Cannot create path " + fileName,
+    final ContentValues values = new ContentValues();
+    values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+      values.put(MediaStore.Images.Media.IS_PENDING, 1);
+
+    final ContentResolver resolver = context.getContentResolver();
+    final Uri external = MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            item = Objects.requireNonNull(resolver.insert(external, values));
+
+    try (final OutputStream outputStream = resolver.openOutputStream(item)) {
+      Objects.requireNonNull(outputStream).write(data);
+    } catch (Exception e) {
+      UserInterface.showExceptionToNotification(e.toString(),
               "saveImageToDisk()", context);
-
-    try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-      fileOutputStream.write(data);
-    } catch (final Exception e) {
-      UserInterface.showExceptionToNotification(
-              e.toString(), "saveImageToDisk()", context);
     }
+
+    values.clear();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+      values.put(MediaStore.Images.Media.IS_PENDING, 0);
+    resolver.update(item, values, null, null);
   }
 }
