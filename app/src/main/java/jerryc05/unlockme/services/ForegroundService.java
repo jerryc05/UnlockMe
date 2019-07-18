@@ -25,7 +25,7 @@ public class ForegroundService extends Service {
   static final        String
           TAG                          = ForegroundService.class.getSimpleName();
   public static final String
-          ACTION_UPDATE_NOTIFICATION   = "ACTION_UPDATE_NOTIFICATION",
+          ACTION_DISMISS_NOTIFICATION  = "ACTION_DISMISS_NOTIFICATION",
           ACTION_CAPTURE_IMAGE         = "ACTION_CAPTURE_IMAGE",
           EXTRA_CANCEL_NOTIFICATION_ID = "EXTRA_CANCEL_NOTIFICATION_ID";
   private ThreadPoolExecutor threadPoolExecutor;
@@ -62,11 +62,10 @@ public class ForegroundService extends Service {
       public void run() {
         try {
           switch (Objects.requireNonNull(intent.getAction())) {
-            case ACTION_UPDATE_NOTIFICATION:
+            case ACTION_DISMISS_NOTIFICATION:
               UserInterface.getNotificationManager(ForegroundService.this)
                       .cancel(intent.getIntExtra(
                               EXTRA_CANCEL_NOTIFICATION_ID, -1));
-              notifyToForegroundService(ForegroundService.this);
               break;
             case ACTION_CAPTURE_IMAGE:
               getImageFromDefaultCamera(ForegroundService.this,

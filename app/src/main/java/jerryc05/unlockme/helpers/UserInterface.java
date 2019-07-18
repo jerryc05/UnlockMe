@@ -24,7 +24,7 @@ import jerryc05.unlockme.R;
 import jerryc05.unlockme.services.ForegroundService;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
-import static jerryc05.unlockme.services.ForegroundService.ACTION_UPDATE_NOTIFICATION;
+import static jerryc05.unlockme.services.ForegroundService.ACTION_DISMISS_NOTIFICATION;
 import static jerryc05.unlockme.services.ForegroundService.EXTRA_CANCEL_NOTIFICATION_ID;
 
 /**
@@ -138,7 +138,7 @@ public final class UserInterface {
           @NonNull final Context context) {
 
     final Intent intent = new Intent(context, ForegroundService.class);
-    intent.setAction(ACTION_UPDATE_NOTIFICATION);
+    intent.setAction(ACTION_DISMISS_NOTIFICATION);
     intent.putExtra(EXTRA_CANCEL_NOTIFICATION_ID, cancelNotificationID);
 
     final PendingIntent pendingIntent;
@@ -179,7 +179,7 @@ public final class UserInterface {
             .setTicker(title)
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
-            .setAutoCancel(true);
+            .setAutoCancel(true); //todo auto cancel
 
     getNotificationManager(context).notify(id, setNotificationChannel(
             builder, getNotificationManager(context),
