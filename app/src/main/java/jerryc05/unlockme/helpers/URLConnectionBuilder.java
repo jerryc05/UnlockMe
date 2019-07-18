@@ -40,17 +40,16 @@ import jerryc05.unlockme.BuildConfig;
  * @see java.net.HttpURLConnection
  * @see javax.net.ssl.HttpsURLConnection
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
 public final class URLConnectionBuilder {
 
   private final static String
           TAG = URLConnectionBuilder.class.getSimpleName();
 
-  public final static int
+  private final static int
           TRANSPORT_CELLULAR = 0,
           TRANSPORT_WIFI     = 1;
 
-  public final static String
+  final static String
           METHOD_GET     = "GET",
           METHOD_POST    = "POST",
           METHOD_HEAD    = "HEAD",
@@ -65,30 +64,37 @@ public final class URLConnectionBuilder {
   @StringDef({METHOD_GET, METHOD_POST, METHOD_HEAD, METHOD_OPTIONS,
           METHOD_PUT, METHOD_DELETE, METHOD_TRACE})
   @Retention(RetentionPolicy.SOURCE)
-  public @interface RequestMethods {
+  @interface RequestMethods {
   }
 
-  private URLConnectionBuilder(@NonNull String _baseURL)
+  private URLConnectionBuilder(@NonNull String baseURL)
           throws IOException {
-    _baseURL = _baseURL.trim();
-    if (!_baseURL.startsWith("http://") && !_baseURL.startsWith("https://"))
-      throw new UnsupportedOperationException(
-              "${baseURL} prefix not recognized: " + _baseURL);
+    baseURL = baseURL.trim();
 
-    urlConnection = new URL(_baseURL).openConnection();
-    urlConnection.setConnectTimeout(5 * 1000);
-    urlConnection.setReadTimeout(5 * 1000);
-    isHTTP = _baseURL.charAt(4) == ':';
+    if (baseURL.startsWith("http")) {
+      if (baseURL.startsWith("://", 4))
+        isHTTP = true;
+      else if (baseURL.startsWith("s://", 4))
+        isHTTP = false;
+      else
+        throw new UnsupportedOperationException(
+                "URL scheme prefix not recognized: " + baseURL);
+
+      urlConnection = new URL(baseURL).openConnection();
+      urlConnection.setConnectTimeout(5 * 1000);
+      urlConnection.setReadTimeout(5 * 1000);
+    }
   }
 
-  public static URLConnectionBuilder get(@NonNull final String _baseURL)
+  public static URLConnectionBuilder get(@NonNull final String baseURL)
           throws IOException {
-    return new URLConnectionBuilder(_baseURL);
+    return new URLConnectionBuilder(baseURL);
   }
 
-  public static URLConnectionBuilder post(@NonNull final String _baseURL)
+  @SuppressWarnings("unused")
+  public static URLConnectionBuilder post(@NonNull final String baseURL)
           throws IOException {
-    return new URLConnectionBuilder(_baseURL)
+    return new URLConnectionBuilder(baseURL)
             .setRequestMethod(METHOD_POST);
   }
 
@@ -105,6 +111,7 @@ public final class URLConnectionBuilder {
     return this;
   }
 
+  @SuppressWarnings("WeakerAccess")
   public String getResult(@NonNull final String charset) throws IOException {
     try {
       String result;
@@ -156,7 +163,7 @@ public final class URLConnectionBuilder {
       Log.d(TAG, "disconnect: " + urlConnection.getURL());
   }
 
-  public static int getNetworkType(@NonNull final Context context)
+  private static int getNetworkType(@NonNull final Context context)
           throws IllegalStateException {
     final ConnectivityManager mConnectivityManager = (ConnectivityManager)
             context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -191,6 +198,7 @@ public final class URLConnectionBuilder {
     }
   }
 
+  @SuppressWarnings("WeakerAccess")
   public URLConnectionBuilder setRequestMethod(
           @RequestMethods final String _requestMethod) {
     try {
@@ -204,37 +212,41 @@ public final class URLConnectionBuilder {
     return this;
   }
 
-  public URLConnectionBuilder setConnectTimeout(final int _connectTimeout) {
-    urlConnection.setConnectTimeout(_connectTimeout);
+  public URLConnectionBuilder setConnectTimeout(final int connectTimeout) {
+    urlConnection.setConnectTimeout(connectTimeout);
     return this;
   }
 
-  public URLConnectionBuilder setReadTimeout(final int _readTimeout) {
-    urlConnection.setReadTimeout(_readTimeout);
+  public URLConnectionBuilder setReadTimeout(final int readTimeout) {
+    urlConnection.setReadTimeout(readTimeout);
     return this;
   }
 
+  @SuppressWarnings("unused")
   public URLConnectionBuilder setWifiOnly(final boolean _wifiOnly) {
     wifiOnly = _wifiOnly;
     return this;
   }
 
-  public URLConnectionBuilder setUseCache(final boolean _useCache) {
-    urlConnection.setUseCaches(_useCache);
+  public URLConnectionBuilder setUseCache(final boolean useCache) {
+    urlConnection.setUseCaches(useCache);
     return this;
   }
 
+  @SuppressWarnings("unused")
   public URLConnectionBuilder setRequestProperty(
           @NonNull final String key, @Nullable final String value) {
     urlConnection.setRequestProperty(key, value);
     return this;
   }
 
+  @SuppressWarnings("unused")
   public URLConnection getUrlConnection() {
     checkNullUrlConnection("get");
     return urlConnection;
   }
 
+  @SuppressWarnings("unused")
   public URLConnection _getUrlConnection() {
     return urlConnection;
   }

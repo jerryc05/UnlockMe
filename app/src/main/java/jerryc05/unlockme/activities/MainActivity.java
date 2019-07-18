@@ -18,6 +18,7 @@ import android.widget.Switch;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import org.json.JSONArray;
 
@@ -192,6 +193,7 @@ public final class MainActivity extends Activity
     return threadPoolExecutor;
   }
 
+  @WorkerThread
   void checkUpdate() {
     URLConnectionBuilder connectionBuilder = null;
     try {
@@ -204,8 +206,8 @@ public final class MainActivity extends Activity
               .setUseCache(false)
               .connect(this);
 
-      final String latest = new JSONArray(
-              connectionBuilder.getResult()).getJSONObject(0)
+      final String latest = new JSONArray(connectionBuilder.getResult())
+              .getJSONObject(0)
               .getString("name").substring(1);
 
       if (!latest.equals(BuildConfig.VERSION_NAME))
@@ -227,7 +229,7 @@ public final class MainActivity extends Activity
                               }
                             })
                     .setNegativeButton("NO", null)
-                    .setIcon(R.drawable.ic_round_info_24px)
+                    .setIcon(R.drawable.ic_round_info)
                     .show();
           }
         });

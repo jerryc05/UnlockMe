@@ -67,7 +67,7 @@ public final class UserInterface {
         new AlertDialog.Builder(context)
                 .setTitle("Crash Report")
                 .setMessage(e.toString())
-                .setIcon(R.drawable.ic_round_error_24px)
+                .setIcon(R.drawable.ic_round_error)
                 .setCancelable(false)
                 .setPositiveButton("OK", onClickListener)
                 .show();

@@ -73,7 +73,7 @@ public final class DeviceAdminHelper {
       new AlertDialog.Builder(activity)
               .setTitle("Permission Required")
               .setMessage(deviceAdminPermissionExplanation)
-              .setIcon(R.drawable.ic_round_error_24px)
+              .setIcon(R.drawable.ic_round_error)
               .setCancelable(false)
               .setPositiveButton("OK", onClickListener)
               .show();

@@ -141,7 +141,7 @@ public abstract class CameraBaseAPIClass {
             new AlertDialog.Builder(context)
                     .setTitle("Permission Required")
                     .setMessage("We need CAMERA permissions to work properly!")
-                    .setIcon(R.drawable.ic_round_warning_24px)
+                    .setIcon(R.drawable.ic_round_warning)
                     .setCancelable(false)
                     .setPositiveButton("OK",
                             getRequestPermissionRationaleOnClickListener(
