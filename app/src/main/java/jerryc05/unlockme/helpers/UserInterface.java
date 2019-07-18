@@ -25,6 +25,7 @@ import jerryc05.unlockme.services.ForegroundService;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static jerryc05.unlockme.services.ForegroundService.ACTION_UPDATE_NOTIFICATION;
+import static jerryc05.unlockme.services.ForegroundService.EXTRA_CANCEL_NOTIFICATION_ID;
 
 /**
  * A collection class for commonly used User Interface methods.
@@ -86,6 +87,8 @@ public final class UserInterface {
           @NonNull final String contentText, @Nullable final String subText,
           @NonNull final Context context) {
     final String title = "Crash Report";
+    final int    id    = title.hashCode();
+
     final Builder builder = new Builder(context)
             .setContentTitle(title)
             .setTicker(title)
@@ -94,13 +97,13 @@ public final class UserInterface {
             .setSubText(subText)
             .setStyle(new Notification.BigTextStyle()
                     .bigText(contentText))
-            .setContentIntent(getUpdateNotificationPendingIntent(context));
+            .setContentIntent(getUpdateNotificationPendingIntent(id, context));
 
-    getNotificationManager(context).notify(title.hashCode(),
-            setNotificationChannel(builder, getNotificationManager(context),
-                    "Crash Report",
-                    "Crash report notification channel for UnlockMe",
-                    true).build());
+    getNotificationManager(context).notify(id, setNotificationChannel(
+            builder, getNotificationManager(context),
+            "Crash Report",
+            "Crash report notification channel for UnlockMe",
+            true).build());
   }
 
   @SuppressWarnings("unused")
@@ -108,6 +111,7 @@ public final class UserInterface {
                                        @NonNull final byte[] bytes,
                                        @NonNull final Context context) {
     final String title = "Picture Taken";
+    final int    id    = title.hashCode();
 
     final Builder builder = new Builder(context)
             .setContentTitle(title)
@@ -117,20 +121,25 @@ public final class UserInterface {
             .setStyle(new Notification.BigPictureStyle()
                     .bigPicture(BitmapFactory.decodeByteArray(
                             bytes, 0, bytes.length)))
-            .setContentIntent(getUpdateNotificationPendingIntent(context));
+            .setContentIntent(getUpdateNotificationPendingIntent(id, context));
 
-    getNotificationManager(context).notify(title.hashCode(),
-            setNotificationChannel(builder, getNotificationManager(context),
-                    "Image Captured Report",
-                    "Image captured report notification channel for UnlockMe",
-                    false).build());
+    getNotificationManager(context).notify(id, setNotificationChannel(
+            builder, getNotificationManager(context),
+            "Image Captured Report",
+            "Image captured report notification channel for UnlockMe",
+            false).build());
   }
 
+  /**
+   * @param cancelNotificationID pass -1 to stop dismissing notification.
+   */
   private static PendingIntent getUpdateNotificationPendingIntent(
+          final int cancelNotificationID,
           @NonNull final Context context) {
 
     final Intent intent = new Intent(context, ForegroundService.class);
     intent.setAction(ACTION_UPDATE_NOTIFICATION);
+    intent.putExtra(EXTRA_CANCEL_NOTIFICATION_ID, cancelNotificationID);
 
     final PendingIntent pendingIntent;
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
@@ -163,17 +172,20 @@ public final class UserInterface {
   public static void notifyToUI(@NonNull final String title,
                                 @NonNull final String contentText,
                                 @NonNull final Context context) {
+    final int id = title.hashCode();
+
     @SuppressLint("IconColors") final Builder builder = new Builder(context)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground);
+            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
+            .setAutoCancel(true);
 
-    getNotificationManager(context).notify(title.hashCode(),
-            setNotificationChannel(builder, getNotificationManager(context),
-                    "UnlockMe Notification Channel",
-                    "Regular notification channel for UnlockMe",
-                    true).build());
+    getNotificationManager(context).notify(id, setNotificationChannel(
+            builder, getNotificationManager(context),
+            "UnlockMe Notification Channel",
+            "Regular notification channel for UnlockMe",
+            true).build());
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -210,8 +222,7 @@ public final class UserInterface {
     return builder;
   }
 
-  @SuppressWarnings("WeakerAccess")
-  static NotificationManager getNotificationManager(
+  public static NotificationManager getNotificationManager(
           @NonNull final Context context) {
     return (NotificationManager)
             context.getSystemService(NOTIFICATION_SERVICE);

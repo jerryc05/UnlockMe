@@ -47,15 +47,15 @@ public final class MainActivity extends Activity
         implements OnClickListener, OnCheckedChangeListener {
 
   final static        String
-          TAG                       = MainActivity.class.getSimpleName();
+          TAG                                    = MainActivity.class.getSimpleName();
   public final static int
-          REQUEST_CODE_DEVICE_ADMIN = 0,
-          REQUEST_CODE_CAMERA       = 1;
+          REQUEST_CODE_DEVICE_ADMIN              = 0,
+          REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
   public        ReentrantLock      requestDeviceAdminLock;
   public static ThreadPoolExecutor threadPoolExecutor;
 
-  @IntDef({REQUEST_CODE_DEVICE_ADMIN, REQUEST_CODE_CAMERA})
+  @IntDef({REQUEST_CODE_DEVICE_ADMIN, REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL})
   @Retention(RetentionPolicy.SOURCE)
   private @interface RequestCodes {
   }
@@ -127,7 +127,7 @@ public final class MainActivity extends Activity
   public void onRequestPermissionsResult(int requestCode,
                                          @NonNull String[] permissions,
                                          @NonNull int[] grantResults) {
-    if (requestCode == REQUEST_CODE_CAMERA)
+    if (requestCode == REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL)
       CameraBaseAPIClass.onRequestPermissionFinished(
               this, grantResults);
   }

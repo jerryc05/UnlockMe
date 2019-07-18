@@ -33,7 +33,8 @@ import java.util.Objects;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.UserInterface;
 
-import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_CAMERA;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL;
 
 @WorkerThread
 public abstract class CameraBaseAPIClass {
@@ -42,6 +43,12 @@ public abstract class CameraBaseAPIClass {
           SP_NAME_CAMERA             = "CAMERA",
           SP_KEY_PREFER_CAMERA_API_2 = "prefer_camera_api_2",
           EXTRA_CAMERA_FACING        = "EXTRA_CAMERA_FACING";
+
+  private static final boolean canUseCamera2 =
+          Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+  private static       boolean isFront       = true;
+  @SuppressWarnings("CanBeFinal")
+  static               int     imageCount    = 5;
 
   @SuppressWarnings("unused")
   @StringDef(SP_NAME_CAMERA)
@@ -60,12 +67,6 @@ public abstract class CameraBaseAPIClass {
   @Retention(RetentionPolicy.SOURCE)
   public @interface IntentExtraKeys {
   }
-
-  private static final boolean canUseCamera2 =
-          Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-  private static       boolean isFront       = true;
-  @SuppressWarnings("CanBeFinal")
-  static               int     imageCount    = 5;
 
   @SuppressWarnings("unused")
   public static void getImageFromDefaultCamera(
@@ -116,7 +117,7 @@ public abstract class CameraBaseAPIClass {
   public static boolean requestPermissions(
           @NonNull final Context context) {
     if (!context.getPackageManager()
-            .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            .hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)) {
       UserInterface.showExceptionToDialog(new UnsupportedOperationException(
               "requestPermissions() Camera device not found!"), context);
     }
@@ -127,20 +128,25 @@ public abstract class CameraBaseAPIClass {
               "requestPermissions() External storage not writable!"), context);
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            context.checkSelfPermission(Manifest.permission.CAMERA) ==
-                    PackageManager.PERMISSION_GRANTED)
+            (context.checkSelfPermission(Manifest.permission.CAMERA) ==
+                    PERMISSION_GRANTED && context.checkSelfPermission(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                    PERMISSION_GRANTED))
       return true;
 
     if (context instanceof Activity)
       if (((Activity) context).shouldShowRequestPermissionRationale(
-              Manifest.permission.CAMERA)) {
+              Manifest.permission.CAMERA) ||
+              ((Activity) context).shouldShowRequestPermissionRationale(
+                      Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 
         ((Activity) context).runOnUiThread(new Runnable() {
           @Override
           public void run() {
             new AlertDialog.Builder(context)
                     .setTitle("Permission Required")
-                    .setMessage("We need CAMERA permissions to work properly!")
+                    .setMessage("We need the following permissions to work properly:\n" +
+                            "\n-\t\tCAMERA\n-\t\tWRITE_EXTERNAL_STORAGE")
                     .setIcon(R.drawable.ic_round_warning)
                     .setCancelable(false)
                     .setPositiveButton("OK",
@@ -151,7 +157,7 @@ public abstract class CameraBaseAPIClass {
         });
       } else
         ((Activity) context).requestPermissions(getPermissionsArray(),
-                REQUEST_CODE_CAMERA);
+                REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
 
     return false;
   }
@@ -165,25 +171,32 @@ public abstract class CameraBaseAPIClass {
       public void onClick(DialogInterface dialogInterface,
                           int i) {
         activity.requestPermissions(getPermissionsArray(),
-                REQUEST_CODE_CAMERA);
+                REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
       }
     };
   }
 
   @SuppressWarnings("WeakerAccess")
   static String[] getPermissionsArray() {
-    return new String[]{Manifest.permission.CAMERA};
+    return new String[]{
+            Manifest.permission.CAMERA,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
   }
 
   public static void onRequestPermissionFinished(
           @NonNull final Activity activity,
           @NonNull final int[] grantResults) {
-    final boolean granted = grantResults.length > 0 &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED;
+    boolean granted = true;
+    if (grantResults.length > 0)
+      for (int result : grantResults)
+        if (result != PackageManager.PERMISSION_GRANTED) {
+          granted = false;
+          break;
+        }
 
     final String granted_str = granted
-            ? "Camera Permissions Granted √"
-            : "Camera Permissions Denied ×";
+            ? "Camera and Write External Storage Permissions Granted √"
+            : "Camera or Write External Storage Permissions Denied ×";
     Toast.makeText(activity, granted_str, Toast.LENGTH_SHORT).show();
 
     if (granted)

@@ -23,10 +23,11 @@ import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.getImageFromDe
 public class ForegroundService extends Service {
 
   static final        String
-          TAG                        = ForegroundService.class.getSimpleName();
+          TAG                          = ForegroundService.class.getSimpleName();
   public static final String
-          ACTION_UPDATE_NOTIFICATION = "ACTION_UPDATE_NOTIFICATION",
-          ACTION_CAPTURE_IMAGE       = "ACTION_CAPTURE_IMAGE";
+          ACTION_UPDATE_NOTIFICATION   = "ACTION_UPDATE_NOTIFICATION",
+          ACTION_CAPTURE_IMAGE         = "ACTION_CAPTURE_IMAGE",
+          EXTRA_CANCEL_NOTIFICATION_ID = "EXTRA_CANCEL_NOTIFICATION_ID";
   private ThreadPoolExecutor threadPoolExecutor;
   MyDeviceAdminReceiver myDeviceAdminReceiver;
 
@@ -62,6 +63,9 @@ public class ForegroundService extends Service {
         try {
           switch (Objects.requireNonNull(intent.getAction())) {
             case ACTION_UPDATE_NOTIFICATION:
+              UserInterface.getNotificationManager(ForegroundService.this)
+                      .cancel(intent.getIntExtra(
+                              EXTRA_CANCEL_NOTIFICATION_ID, -1));
               notifyToForegroundService(ForegroundService.this);
               break;
             case ACTION_CAPTURE_IMAGE:
@@ -80,6 +84,20 @@ public class ForegroundService extends Service {
     });
 
     return super.onStartCommand(intent, flags, startId);
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onDestroy: ");
+
+    unregisterReceiver(myDeviceAdminReceiver);
+    if (threadPoolExecutor != null) {
+      threadPoolExecutor.shutdown();
+      threadPoolExecutor = null;
+    }
   }
 
   private ThreadPoolExecutor getThreadPoolExecutor() {
@@ -105,20 +123,6 @@ public class ForegroundService extends Service {
       threadPoolExecutor.allowCoreThreadTimeOut(true);
     }
     return threadPoolExecutor;
-  }
-
-  @Override
-  public void onDestroy() {
-    super.onDestroy();
-
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "onDestroy: ");
-
-    unregisterReceiver(myDeviceAdminReceiver);
-    if (threadPoolExecutor != null) {
-      threadPoolExecutor.shutdown();
-      threadPoolExecutor = null;
-    }
   }
 
   @Override
