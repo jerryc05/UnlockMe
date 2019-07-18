@@ -72,7 +72,7 @@ public class ForegroundService extends Service {
             default:
               throw new UnsupportedOperationException("Unknown action!");
           }
-        } catch (Exception e) {
+        } catch (final Exception e) {
           UserInterface.showExceptionToNotification(e.toString(),
                   "onStartCommand()", ForegroundService.this);
         }

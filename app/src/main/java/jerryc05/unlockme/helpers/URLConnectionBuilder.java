@@ -8,9 +8,15 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringDef;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -56,7 +62,14 @@ public final class URLConnectionBuilder {
   private boolean isHTTP, wifiOnly = true;
   private URLConnection urlConnection;
 
-  private URLConnectionBuilder(String _baseURL) throws IOException {
+  @StringDef({METHOD_GET, METHOD_POST, METHOD_HEAD, METHOD_OPTIONS,
+          METHOD_PUT, METHOD_DELETE, METHOD_TRACE})
+  @Retention(RetentionPolicy.SOURCE)
+  public @interface RequestMethods {
+  }
+
+  private URLConnectionBuilder(@NonNull String _baseURL)
+          throws IOException {
     _baseURL = _baseURL.trim();
     if (!_baseURL.startsWith("http://") && !_baseURL.startsWith("https://"))
       throw new UnsupportedOperationException(
@@ -68,15 +81,19 @@ public final class URLConnectionBuilder {
     isHTTP = _baseURL.charAt(4) == ':';
   }
 
-  public static URLConnectionBuilder get(String _baseURL) throws IOException {
+  public static URLConnectionBuilder get(@NonNull final String _baseURL)
+          throws IOException {
     return new URLConnectionBuilder(_baseURL);
   }
 
-  public static URLConnectionBuilder post(String _baseURL) throws IOException {
-    return new URLConnectionBuilder(_baseURL).setRequestMethod(METHOD_POST);
+  public static URLConnectionBuilder post(@NonNull final String _baseURL)
+          throws IOException {
+    return new URLConnectionBuilder(_baseURL)
+            .setRequestMethod(METHOD_POST);
   }
 
-  public URLConnectionBuilder connect(final Context context) throws IOException {
+  public URLConnectionBuilder connect(@NonNull final Context context)
+          throws IOException {
     checkNullUrlConnection("run");
     if (!wifiOnly ||
             getNetworkType(context) == TRANSPORT_WIFI)
@@ -88,7 +105,7 @@ public final class URLConnectionBuilder {
     return this;
   }
 
-  public String getResult(String charset) throws IOException {
+  public String getResult(@NonNull final String charset) throws IOException {
     try {
       String result;
       {
@@ -139,7 +156,7 @@ public final class URLConnectionBuilder {
       Log.d(TAG, "disconnect: " + urlConnection.getURL());
   }
 
-  public static int getNetworkType(Context context)
+  public static int getNetworkType(@NonNull final Context context)
           throws IllegalStateException {
     final ConnectivityManager mConnectivityManager = (ConnectivityManager)
             context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -174,7 +191,8 @@ public final class URLConnectionBuilder {
     }
   }
 
-  public URLConnectionBuilder setRequestMethod(String _requestMethod) {
+  public URLConnectionBuilder setRequestMethod(
+          @RequestMethods final String _requestMethod) {
     try {
       (isHTTP ? (HttpURLConnection) urlConnection
               : (HttpsURLConnection) urlConnection)
@@ -186,27 +204,28 @@ public final class URLConnectionBuilder {
     return this;
   }
 
-  public URLConnectionBuilder setConnectTimeout(int _connectTimeout) {
+  public URLConnectionBuilder setConnectTimeout(final int _connectTimeout) {
     urlConnection.setConnectTimeout(_connectTimeout);
     return this;
   }
 
-  public URLConnectionBuilder setReadTimeout(int _readTimeout) {
+  public URLConnectionBuilder setReadTimeout(final int _readTimeout) {
     urlConnection.setReadTimeout(_readTimeout);
     return this;
   }
 
-  public URLConnectionBuilder setWifiOnly(boolean _wifiOnly) {
+  public URLConnectionBuilder setWifiOnly(final boolean _wifiOnly) {
     wifiOnly = _wifiOnly;
     return this;
   }
 
-  public URLConnectionBuilder setUseCache(boolean _useCache) {
+  public URLConnectionBuilder setUseCache(final boolean _useCache) {
     urlConnection.setUseCaches(_useCache);
     return this;
   }
 
-  public URLConnectionBuilder setRequestProperty(String key, String value) {
+  public URLConnectionBuilder setRequestProperty(
+          @NonNull final String key, @Nullable final String value) {
     urlConnection.setRequestProperty(key, value);
     return this;
   }
@@ -220,7 +239,7 @@ public final class URLConnectionBuilder {
     return urlConnection;
   }
 
-  private void checkNullUrlConnection(String action) {
+  private void checkNullUrlConnection(@NonNull final String action) {
     if (urlConnection == null)
       throw new UnsupportedOperationException(
               "Cannot " + action + " null instance decodeURL ${urlConnection}!");

@@ -7,11 +7,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 
+import androidx.annotation.NonNull;
+
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jerryc05.unlockme.activities.MainActivity;
 import jerryc05.unlockme.R;
+import jerryc05.unlockme.activities.MainActivity;
 import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
 
 import static android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION;
@@ -24,7 +26,8 @@ public final class DeviceAdminHelper {
           "We need DEVICE ADMIN permission to work properly.";
   private static       ComponentName mComponentName;
 
-  public static void requestPermission(MainActivity activity) {
+  public static void requestPermission(
+          @NonNull final MainActivity activity) {
     if (activity.requestDeviceAdminLock != null) {
       activity.requestDeviceAdminLock.unlock();
       activity.requestDeviceAdminLock = null;
@@ -50,7 +53,8 @@ public final class DeviceAdminHelper {
       mComponentName = null;
   }
 
-  public static void onRequestPermissionFinished(MainActivity activity) {
+  public static void onRequestPermissionFinished(
+          @NonNull final MainActivity activity) {
     if (!getDevicePolicyManager(activity).isAdminActive(
             getComponentName(activity))) {
       if (activity.requestDeviceAdminLock == null)
@@ -60,9 +64,9 @@ public final class DeviceAdminHelper {
       final DialogInterface.OnClickListener onClickListener =
               new DialogInterface.OnClickListener() {
                 @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                  if (i == DialogInterface.BUTTON_POSITIVE)
-                    System.exit(1);
+                public void onClick(final DialogInterface dialog,
+                                    final int which) {
+                  System.exit(1);
                 }
               };
 
@@ -77,12 +81,14 @@ public final class DeviceAdminHelper {
       mComponentName = null;
   }
 
-  private static DevicePolicyManager getDevicePolicyManager(final Context context) {
+  private static DevicePolicyManager getDevicePolicyManager(
+          @NonNull final Context context) {
     return (DevicePolicyManager) Objects.requireNonNull(
-           context.getSystemService(Context.DEVICE_POLICY_SERVICE));
+            context.getSystemService(Context.DEVICE_POLICY_SERVICE));
   }
 
-  private static ComponentName getComponentName(final Context context) {
+  private static ComponentName getComponentName(
+          @NonNull final Context context) {
     if (mComponentName == null)
       mComponentName = new ComponentName(context, MyDeviceAdminReceiver.class);
     return mComponentName;

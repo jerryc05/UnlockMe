@@ -11,9 +11,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
 
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.services.ForegroundService;
@@ -34,24 +39,25 @@ import static jerryc05.unlockme.services.ForegroundService.ACTION_UPDATE_NOTIFIC
  * @see android.app.AlertDialog
  * @see android.app.Notification
  */
+@UiThread
 public final class UserInterface {
 
   @SuppressWarnings("unused")
-  public static void showExceptionToDialog(final Context context, final Exception e) {
-    if (context == null)
-      return;
-
-    showExceptionToDialog(context, e, new DialogInterface.OnClickListener() {
+  public static void showExceptionToDialog(
+          @NonNull final Exception e, @NonNull final Context context) {
+    showExceptionToDialog(e, new OnClickListener() {
       @Override
       public void onClick(DialogInterface dialogInterface, int i) {
         throw new UnsupportedOperationException(e);
       }
-    });
+    }, context);
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void showExceptionToDialog(final Context context, final Exception e,
-                                           final DialogInterface.OnClickListener onClickListener) {
+  public static void showExceptionToDialog(
+          @NonNull final Exception e,
+          @NonNull final OnClickListener onClickListener,
+          @NonNull final Context context) {
     if (!(context instanceof Activity))
       return;
 
@@ -69,16 +75,16 @@ public final class UserInterface {
     });
   }
 
-  public static void showExceptionToNotification(final String contentText,
-                                                 final String subText,
-                                                 final Context context) {
+  public static void showExceptionToNotification(
+          @NonNull final String contentText, @Nullable final String subText,
+          @NonNull final Context context) {
     showExceptionToNotificationNoRethrow(contentText, subText, context);
     throw new UnsupportedOperationException(contentText);
   }
 
-  public static void showExceptionToNotificationNoRethrow(final String contentText,
-                                                          final String subText,
-                                                          final Context context) {
+  public static void showExceptionToNotificationNoRethrow(
+          @NonNull final String contentText, @Nullable final String subText,
+          @NonNull final Context context) {
     final String title = "Crash Report";
     final Builder builder = new Builder(context)
             .setContentTitle(title)
@@ -98,9 +104,9 @@ public final class UserInterface {
   }
 
   @SuppressWarnings("unused")
-  public static void notifyPictureToUI(final String contentText,
-                                       final byte[] bytes,
-                                       final Context context) {
+  public static void notifyPictureToUI(@NonNull final String contentText,
+                                       @NonNull final byte[] bytes,
+                                       @NonNull final Context context) {
     final String title = "Picture Taken";
 
     final Builder builder = new Builder(context)
@@ -121,7 +127,7 @@ public final class UserInterface {
   }
 
   private static PendingIntent getUpdateNotificationPendingIntent(
-          final Context context) {
+          @NonNull final Context context) {
 
     final Intent intent = new Intent(context, ForegroundService.class);
     intent.setAction(ACTION_UPDATE_NOTIFICATION);
@@ -138,7 +144,7 @@ public final class UserInterface {
     return pendingIntent;
   }
 
-  public static void notifyToForegroundService(final Service service) {
+  public static void notifyToForegroundService(@NonNull final Service service) {
     final String title = "Background Service";
 
     final Builder builder = new Builder(service)
@@ -154,9 +160,9 @@ public final class UserInterface {
   }
 
   @SuppressWarnings("unused")
-  public static void notifyToUI(final String title,
-                                final String contentText,
-                                final Context context) {
+  public static void notifyToUI(@NonNull final String title,
+                                @NonNull final String contentText,
+                                @NonNull final Context context) {
     @SuppressLint("IconColors") final Builder builder = new Builder(context)
             .setContentTitle(title)
             .setTicker(title)
@@ -172,9 +178,9 @@ public final class UserInterface {
 
   @SuppressWarnings("WeakerAccess")
   static Builder setNotificationChannel(
-          final Builder builder,
-          final NotificationManager notificationManager,
-          final String channelID, final String desc,
+          @NonNull final Builder builder,
+          @NonNull final NotificationManager notificationManager,
+          @NonNull final String channelID, @Nullable final String desc,
           final boolean enableVibrationAndSound) {
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -205,7 +211,8 @@ public final class UserInterface {
   }
 
   @SuppressWarnings("WeakerAccess")
-  static NotificationManager getNotificationManager(Context context) {
+  static NotificationManager getNotificationManager(
+          @NonNull final Context context) {
     return (NotificationManager)
             context.getSystemService(NOTIFICATION_SERVICE);
   }

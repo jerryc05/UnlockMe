@@ -4,7 +4,6 @@ import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.UserHandle;
 import android.util.Log;
 
 import jerryc05.unlockme.BuildConfig;
@@ -21,7 +20,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
   private static       int    failedAttempt;
 
   @Override
-  public void onPasswordFailed(Context context, Intent failedIntent, UserHandle user) {
+  public void onPasswordFailed(Context context, Intent failedIntent) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onPasswordFailed: ");
 
@@ -35,12 +34,11 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
   }
 
   @Override
-  public void onPasswordSucceeded(Context context, Intent intent, UserHandle user) {
-    if (failedAttempt > 0) {
+  public void onPasswordSucceeded(Context context, Intent intent) {
+    if (failedAttempt > 0)
       UserInterface.notifyToUI("Unsuccessful Unlock Attempt Captured",
               "UnlockMe captured " + failedAttempt +
                       " attempt(s) since last successful unlock", context);
-    }
     failedAttempt = 0;
   }
 }

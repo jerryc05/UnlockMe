@@ -8,6 +8,8 @@ import android.hardware.Camera.PictureCallback;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
 
@@ -24,7 +26,7 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
   @SuppressWarnings("WeakerAccess")
   static               SurfaceTexture  surfaceTexture;
 
-  static void getImage(final int facing, final Context context) {
+  static void getImage(final int facing, @NonNull final Context context) {
     predefinedFacing = facing;
     setupCamera1();
     openCamera1(context);
@@ -44,7 +46,7 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
     }
   }
 
-  private static void openCamera1(final Context context) {
+  private static void openCamera1(@NonNull final Context context) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "openCamera1: ");
 
@@ -52,14 +54,14 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
       mCamera = Camera.open(cameraID);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
         mCamera.enableShutterSound(false);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       UserInterface.showExceptionToNotification(
               e.toString(), "openCamera1()", context);
     }
   }
 
   @SuppressWarnings("WeakerAccess")
-  static void captureCamera1(final Context context) {
+  static void captureCamera1(@NonNull final Context context) {
     try {
       if (surfaceTexture == null)
         surfaceTexture =
@@ -70,7 +72,7 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
               getJpegPictureCallback(context));
       captureCount++;
 
-    } catch (Exception e) {
+    } catch (final Exception e) {
       closeCamera1(mCamera);
       UserInterface.showExceptionToNotification(
               e.toString(), "captureCamera1()", context);
@@ -78,7 +80,7 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
   }
 
   @SuppressWarnings("WeakerAccess")
-  static PictureCallback getJpegPictureCallback(final Context context) {
+  static PictureCallback getJpegPictureCallback(@NonNull final Context context) {
     if (mJpegPictureCallback == null)
       mJpegPictureCallback = new PictureCallback() {
         @Override
@@ -102,7 +104,7 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
   }
 
   @SuppressWarnings("WeakerAccess")
-  static void closeCamera1(Camera camera) {
+  static void closeCamera1(@NonNull final Camera camera) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "closeCamera1: ");
 

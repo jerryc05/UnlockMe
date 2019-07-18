@@ -15,8 +15,14 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.json.JSONArray;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -36,7 +42,6 @@ import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_F
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
 
-@SuppressWarnings("NullableProblems")
 public final class MainActivity extends Activity
         implements OnClickListener, OnCheckedChangeListener {
 
@@ -49,8 +54,13 @@ public final class MainActivity extends Activity
   public        ReentrantLock      requestDeviceAdminLock;
   public static ThreadPoolExecutor threadPoolExecutor;
 
+  @IntDef({REQUEST_CODE_DEVICE_ADMIN, REQUEST_CODE_CAMERA})
+  @Retention(RetentionPolicy.SOURCE)
+  private @interface RequestCodes {
+  }
+
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
@@ -104,24 +114,25 @@ public final class MainActivity extends Activity
   }
 
   @Override
-  protected void onActivityResult(int requestCode, int resultCode,
-                                  Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-
-    if (requestCode == REQUEST_CODE_DEVICE_ADMIN)
+  protected void onActivityResult(@RequestCodes int requestCode,
+                                  int resultCode,
+                                  @Nullable Intent data) {
+    if (requestCode == REQUEST_CODE_DEVICE_ADMIN &&
+            resultCode == RESULT_CANCELED)
       DeviceAdminHelper.onRequestPermissionFinished(this);
   }
 
   @Override
   public void onRequestPermissionsResult(int requestCode,
-                                         String[] permissions,
-                                         int[] grantResults) {
+                                         @NonNull String[] permissions,
+                                         @NonNull int[] grantResults) {
     if (requestCode == REQUEST_CODE_CAMERA)
-      CameraBaseAPIClass.onRequestPermissionFinished(this, grantResults);
+      CameraBaseAPIClass.onRequestPermissionFinished(
+              this, grantResults);
   }
 
   @Override
-  public void onClick(View view) {
+  public void onClick(@NonNull View view) {
     threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
@@ -147,11 +158,12 @@ public final class MainActivity extends Activity
   }
 
   @Override
-  public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-    if (compoundButton.getId() == R.id.activity_main_api1Switch)
+  public void onCheckedChanged(@NonNull CompoundButton buttonView,
+                               boolean isChecked) {
+    if (buttonView.getId() == R.id.activity_main_api1Switch)
       getSharedPreferences(CameraBaseAPIClass.SP_NAME_CAMERA,
               Context.MODE_PRIVATE).edit()
-              .putBoolean(SP_KEY_PREFER_CAMERA_API_2, !b)
+              .putBoolean(SP_KEY_PREFER_CAMERA_API_2, !isChecked)
               .apply();
   }
 

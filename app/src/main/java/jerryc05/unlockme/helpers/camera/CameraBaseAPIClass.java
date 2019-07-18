@@ -18,7 +18,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.StringDef;
+import androidx.annotation.WorkerThread;
+
 import java.io.OutputStream;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -29,6 +35,7 @@ import jerryc05.unlockme.helpers.UserInterface;
 
 import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_CAMERA;
 
+@WorkerThread
 public abstract class CameraBaseAPIClass {
 
   public static final String
@@ -36,15 +43,34 @@ public abstract class CameraBaseAPIClass {
           SP_KEY_PREFER_CAMERA_API_2 = "prefer_camera_api_2",
           EXTRA_CAMERA_FACING        = "EXTRA_CAMERA_FACING";
 
+  @SuppressWarnings("unused")
+  @StringDef(SP_NAME_CAMERA)
+  @Retention(RetentionPolicy.SOURCE)
+  private @interface SharedPreferenceNames {
+  }
+
+  @SuppressWarnings("unused")
+  @StringDef(SP_KEY_PREFER_CAMERA_API_2)
+  @Retention(RetentionPolicy.SOURCE)
+  private @interface SharedPreferenceKeys {
+  }
+
+  @SuppressWarnings("unused")
+  @StringDef(EXTRA_CAMERA_FACING)
+  @Retention(RetentionPolicy.SOURCE)
+  public @interface IntentExtraKeys {
+  }
+
   private static final boolean canUseCamera2 =
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-  private static        boolean isFront       = true;
+  private static       boolean isFront       = true;
   @SuppressWarnings("CanBeFinal")
   static               int     imageCount    = 5;
 
   @SuppressWarnings("unused")
-  public static void getImageFromDefaultCamera(final Context context,
-                                               final boolean isFront) {
+  public static void getImageFromDefaultCamera(
+          @NonNull final Context context,
+          final boolean isFront) {
     CameraBaseAPIClass.isFront = isFront;
     if (getPreferCamera2(context) && canUseCamera2)
       getImageFromCamera2(isFront, context);
@@ -52,15 +78,17 @@ public abstract class CameraBaseAPIClass {
       getImageFromCamera1(isFront, context);
   }
 
-  public static boolean getPreferCamera2(final Context context) {
+  public static boolean getPreferCamera2(
+          @NonNull final Context context) {
     return context.getSharedPreferences(
             SP_NAME_CAMERA, Context.MODE_PRIVATE)
             .getBoolean(SP_KEY_PREFER_CAMERA_API_2, true);
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera1(final boolean isFront,
-                                         final Context context) {
+  public static void getImageFromCamera1(
+          final boolean isFront,
+          @NonNull final Context context) {
     if (requestPermissions(context))
       Camera1APIHelper.getImage(isFront
               ? Camera.CameraInfo.CAMERA_FACING_FRONT
@@ -68,8 +96,9 @@ public abstract class CameraBaseAPIClass {
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void getImageFromCamera2(final boolean isFront,
-                                         final Context context) {
+  public static void getImageFromCamera2(
+          final boolean isFront,
+          @NonNull final Context context) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       final String ERROR_MSG =
               "Cannot use Camera2 API on devices lower than Lollipop";
@@ -84,19 +113,18 @@ public abstract class CameraBaseAPIClass {
               : CameraCharacteristics.LENS_FACING_BACK, context);
   }
 
-  public static boolean requestPermissions(final Context context) {
+  public static boolean requestPermissions(
+          @NonNull final Context context) {
     if (!context.getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-      UserInterface.showExceptionToDialog(context,
-              new UnsupportedOperationException(
-                      "requestPermissions() Camera device not found!"));
+      UserInterface.showExceptionToDialog(new UnsupportedOperationException(
+              "requestPermissions() Camera device not found!"), context);
     }
 
     if (!Environment.MEDIA_MOUNTED.equals(
             Environment.getExternalStorageState()))
-      UserInterface.showExceptionToDialog(context,
-              new UnsupportedOperationException(
-                      "requestPermissions() External storage not writable!"));
+      UserInterface.showExceptionToDialog(new UnsupportedOperationException(
+              "requestPermissions() External storage not writable!"), context);
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
             context.checkSelfPermission(Manifest.permission.CAMERA) ==
@@ -130,7 +158,7 @@ public abstract class CameraBaseAPIClass {
 
   @SuppressWarnings("WeakerAccess")
   static OnClickListener getRequestPermissionRationaleOnClickListener(
-          final Activity activity) {
+          @NonNull final Activity activity) {
     return new OnClickListener() {
       @SuppressLint("NewApi")
       @Override
@@ -147,8 +175,9 @@ public abstract class CameraBaseAPIClass {
     return new String[]{Manifest.permission.CAMERA};
   }
 
-  public static void onRequestPermissionFinished(final Activity activity,
-                                                 final int[] grantResults) {
+  public static void onRequestPermissionFinished(
+          @NonNull final Activity activity,
+          @NonNull final int[] grantResults) {
     final boolean granted = grantResults.length > 0 &&
             grantResults[0] == PackageManager.PERMISSION_GRANTED;
 
@@ -161,7 +190,8 @@ public abstract class CameraBaseAPIClass {
       getImageFromDefaultCamera(activity, isFront);
   }
 
-  static void saveImageToDisk(final byte[] data, final Context context) {
+  static void saveImageToDisk(@NonNull final byte[] data,
+                              @NonNull final Context context) {
     //noinspection SpellCheckingInspection
     final String
             timeFormat = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS",
@@ -184,7 +214,7 @@ public abstract class CameraBaseAPIClass {
 
     try (final OutputStream outputStream = resolver.openOutputStream(item)) {
       Objects.requireNonNull(outputStream).write(data);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       UserInterface.showExceptionToNotification(e.toString(),
               "saveImageToDisk()", context);
     }
