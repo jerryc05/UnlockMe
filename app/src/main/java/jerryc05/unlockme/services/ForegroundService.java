@@ -6,6 +6,8 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -56,7 +58,8 @@ public class ForegroundService extends Service {
   }
 
   @Override
-  public int onStartCommand(Intent intent, int flags, int startId) {
+  public int onStartCommand(@NonNull final Intent intent,
+                            final int flags, final int startId) {
     threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
@@ -125,7 +128,7 @@ public class ForegroundService extends Service {
   }
 
   @Override
-  public IBinder onBind(Intent intent) {
+  public IBinder onBind(@NonNull final Intent intent) {
     return null;
   }
 }
