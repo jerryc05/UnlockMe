@@ -55,8 +55,10 @@ public final class DeviceAdminHelper {
 
   public static void onRequestPermissionFinished(
           @NonNull final MainActivity activity) {
-    if (!getDevicePolicyManager(activity).isAdminActive(
-            getComponentName(activity))) {
+    final Context applicationContext = activity.getApplicationContext();
+
+    if (!getDevicePolicyManager(applicationContext)
+            .isAdminActive(getComponentName(applicationContext))) {
       if (activity.requestDeviceAdminLock == null)
         activity.requestDeviceAdminLock = new ReentrantLock();
       activity.requestDeviceAdminLock.lock();
@@ -65,7 +67,7 @@ public final class DeviceAdminHelper {
               new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(final DialogInterface dialog,
-                                    final int which) {
+                                    int which) {
                   System.exit(1);
                 }
               };

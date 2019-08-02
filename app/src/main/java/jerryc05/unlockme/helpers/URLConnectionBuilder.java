@@ -43,7 +43,7 @@ import jerryc05.unlockme.BuildConfig;
 public final class URLConnectionBuilder {
 
   private final static String
-          TAG = URLConnectionBuilder.class.getSimpleName();
+          TAG = "URLConnectionBuilder";
 
   private final static int
           TRANSPORT_CELLULAR = 0,
@@ -100,9 +100,11 @@ public final class URLConnectionBuilder {
 
   public URLConnectionBuilder connect(@NonNull final Context context)
           throws IOException {
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "connect: " + urlConnection.getURL());
+
     checkNullUrlConnection("run");
-    if (!wifiOnly ||
-            getNetworkType(context) == TRANSPORT_WIFI)
+    if (!wifiOnly || getNetworkType(context) == TRANSPORT_WIFI)
       (isHTTP ? urlConnection
               : (HttpsURLConnection) urlConnection).connect();
     else
@@ -131,7 +133,7 @@ public final class URLConnectionBuilder {
       }
 
       if (BuildConfig.DEBUG)
-        Log.d(TAG, "connect: Response code = " + (isHTTP
+        Log.v(TAG, "connect: Response code = " + (isHTTP
                 ? (HttpURLConnection) urlConnection
                 : (HttpsURLConnection) urlConnection)
                 .getResponseCode()
@@ -154,13 +156,13 @@ public final class URLConnectionBuilder {
   }
 
   public void disconnect() {
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "disconnect: " + urlConnection.getURL());
+
     checkNullUrlConnection("disconnect");
     (isHTTP ? (HttpURLConnection) urlConnection
             : (HttpsURLConnection) urlConnection)
             .disconnect();
-
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "disconnect: " + urlConnection.getURL());
   }
 
   private static int getNetworkType(@NonNull final Context context)
@@ -182,7 +184,7 @@ public final class URLConnectionBuilder {
     } else {
       final Network network = mConnectivityManager.getActiveNetwork();
       if (network == null)
-        throw new IllegalStateException("Network disconnected!");
+        throw new IllegalStateException("No active network!");
 
       final NetworkCapabilities networkCapabilities =
               mConnectivityManager.getNetworkCapabilities(network);
@@ -212,12 +214,12 @@ public final class URLConnectionBuilder {
     return this;
   }
 
-  public URLConnectionBuilder setConnectTimeout(final int connectTimeout) {
+  public URLConnectionBuilder setConnectTimeout(int connectTimeout) {
     urlConnection.setConnectTimeout(connectTimeout);
     return this;
   }
 
-  public URLConnectionBuilder setReadTimeout(final int readTimeout) {
+  public URLConnectionBuilder setReadTimeout(int readTimeout) {
     urlConnection.setReadTimeout(readTimeout);
     return this;
   }

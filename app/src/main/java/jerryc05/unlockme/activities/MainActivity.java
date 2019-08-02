@@ -47,13 +47,13 @@ public final class MainActivity extends Activity
         implements OnClickListener, OnCheckedChangeListener {
 
   final static        String
-          TAG                                    = MainActivity.class.getSimpleName();
+          TAG                                    = "MainActivity";
   public final static int
           REQUEST_CODE_DEVICE_ADMIN              = 0,
           REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
-  public        ReentrantLock      requestDeviceAdminLock;
-  public static ThreadPoolExecutor threadPoolExecutor;
+  public  ReentrantLock      requestDeviceAdminLock; // todo
+  private ThreadPoolExecutor threadPoolExecutor;
 
   @IntDef({REQUEST_CODE_DEVICE_ADMIN, REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL})
   @Retention(RetentionPolicy.SOURCE)
@@ -65,41 +65,44 @@ public final class MainActivity extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    findViewById(R.id.activity_main_button_front)
-            .setOnClickListener(MainActivity.this);
-    findViewById(R.id.activity_main_button_back)
-            .setOnClickListener(MainActivity.this);
-    findViewById(R.id.activity_main_button_stopService)
-            .setOnClickListener(MainActivity.this);
+    getThreadPoolExecutor().execute(
+            new Runnable() {
+              @Override
+              public void run() {
+                findViewById(R.id.activity_main_button_front)
+                        .setOnClickListener(MainActivity.this);
+                findViewById(R.id.activity_main_button_back)
+                        .setOnClickListener(MainActivity.this);
+                findViewById(R.id.activity_main_button_stopService)
+                        .setOnClickListener(MainActivity.this);
 
-    final Switch forceAPI1 =
-            findViewById(R.id.activity_main_api1Switch);
-    forceAPI1.setOnCheckedChangeListener(MainActivity.this);
-    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2(
-            MainActivity.this));
+                final Switch forceAPI1 = findViewById(R.id.activity_main_api1Switch);
+                forceAPI1.setOnCheckedChangeListener(MainActivity.this);
+                runOnUiThread(new Runnable() {
+                  @Override
+                  public void run() {
+                    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2(
+                            getApplicationContext()));
+                  }
+                });
+              }
+            }
+    );
   }
 
   @Override
   protected void onStart() {
     super.onStart();
 
-    getThreadPoolExecutor().execute(new Runnable() {
+    threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
         if (requestDeviceAdminLock != null)
           requestDeviceAdminLock.lock();
-        DeviceAdminHelper.requestPermission(MainActivity.this);
+        DeviceAdminHelper.requestPermission(MainActivity.this); //todo
         checkUpdate();
       }
     });
-  }
-
-  @Override
-  protected void onStop() {
-    super.onStop();
-
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "onStop: ");
   }
 
   @Override
@@ -108,6 +111,7 @@ public final class MainActivity extends Activity
 
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onDestroy: ");
+
     if (threadPoolExecutor != null) {
       threadPoolExecutor.shutdownNow();
       threadPoolExecutor = null;
@@ -118,22 +122,25 @@ public final class MainActivity extends Activity
   protected void onActivityResult(@RequestCodes int requestCode,
                                   int resultCode,
                                   @Nullable Intent data) {
-    if (requestCode == REQUEST_CODE_DEVICE_ADMIN &&
-            resultCode == RESULT_CANCELED)
-      DeviceAdminHelper.onRequestPermissionFinished(this);
+    if (requestCode == RESULT_CANCELED &&
+            resultCode == REQUEST_CODE_DEVICE_ADMIN)
+      DeviceAdminHelper.onRequestPermissionFinished(this); //todo
   }
 
   @Override
-  public void onRequestPermissionsResult(int requestCode,
+  public void onRequestPermissionsResult(@RequestCodes int requestCode,
                                          @NonNull String[] permissions,
                                          @NonNull int[] grantResults) {
     if (requestCode == REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL)
       CameraBaseAPIClass.onRequestPermissionFinished(
-              this, grantResults);
+              getApplicationContext(), grantResults);
   }
 
   @Override
   public void onClick(@NonNull View view) {
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onClick: ");
+
     threadPoolExecutor.execute(new Runnable() {
       @Override
       public void run() {
@@ -144,8 +151,7 @@ public final class MainActivity extends Activity
         if (id == R.id.activity_main_button_stopService)
           stopService(intent);
 
-        else if (CameraBaseAPIClass.requestPermissions(
-                MainActivity.this)) {
+        else if (CameraBaseAPIClass.requestPermissions(MainActivity.this)) {
           intent.setAction(ACTION_CAPTURE_IMAGE);
           intent.putExtra(EXTRA_CAMERA_FACING,
                   id == R.id.activity_main_button_front);
@@ -181,7 +187,7 @@ public final class MainActivity extends Activity
                           + "\non " + TAG + " rejected:\n >>> "
                           + runnable.toString(),
                   "threadPoolExecutor#rejectedExecution()",
-                  MainActivity.this);
+                  getApplicationContext());
         }
       };
       final int processorCount = Runtime.getRuntime().availableProcessors();
@@ -204,46 +210,51 @@ public final class MainActivity extends Activity
               .setConnectTimeout(1000)
               .setReadTimeout(1000)
               .setUseCache(false)
-              .connect(this);
+              .connect(getApplicationContext());
 
       final String latest = new JSONArray(connectionBuilder.getResult())
               .getJSONObject(0)
               .getString("name").substring(1);
 
-      if (!latest.equals(BuildConfig.VERSION_NAME))
+      if (!latest.equals(BuildConfig.VERSION_NAME)) {
+        if (BuildConfig.DEBUG)
+          Log.d(TAG, "checkUpdate: " + latest);
+
+        final String tagURL = "https://github.com/jerryc05/UnlockMe/releases/tag/v";
+        final DialogInterface.OnClickListener positive =
+                new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialogInterface,
+                                      int i) {
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                            Uri.parse(tagURL + latest)));
+                  }
+                };
+
         runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            final String URL = "https://github.com/jerryc05/UnlockMe/releases/tag/v";
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("New Version Available")
                     .setMessage("Do you want to upgrade from\n\tv" +
                             BuildConfig.VERSION_NAME + "  to  v" + latest + '?')
-                    .setPositiveButton("YES",
-                            new DialogInterface.OnClickListener() {
-                              @Override
-                              public void onClick(DialogInterface dialogInterface,
-                                                  int i) {
-                                startActivity(new Intent(Intent.ACTION_VIEW,
-                                        Uri.parse(URL + latest)));
-                              }
-                            })
+                    .setPositiveButton("YES", positive)
                     .setNegativeButton("NO", null)
                     .setIcon(R.drawable.ic_round_info)
                     .show();
           }
         });
+      }
 
     } catch (final UnknownHostException e) {
       UserInterface.showExceptionToNotificationNoRethrow(
               "Cannot connect to github.com!\n>>> " + e.toString(),
-              "checkUpdate()", this);
-    } catch (final IllegalStateException e) {
-      UserInterface.notifyToUI("Update Interrupted",
-              "Will not connect through cellular data!", this);
+              "checkUpdate()", getApplicationContext());
+
     } catch (final Exception e) {
       UserInterface.showExceptionToNotificationNoRethrow(
-              e.toString(), "checkUpdate()", this);
+              e.toString(), "checkUpdate()", getApplicationContext());
+
     } finally {
       if (connectionBuilder != null)
         connectionBuilder.disconnect();

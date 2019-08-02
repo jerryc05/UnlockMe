@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -30,6 +31,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
+import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.UserInterface;
 
@@ -43,6 +45,9 @@ public abstract class CameraBaseAPIClass {
           SP_NAME_CAMERA             = "CAMERA",
           SP_KEY_PREFER_CAMERA_API_2 = "prefer_camera_api_2",
           EXTRA_CAMERA_FACING        = "EXTRA_CAMERA_FACING";
+
+  private static final String
+          TAG = "CameraBaseAPIClass";
 
   private static final boolean canUseCamera2 =
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
@@ -134,6 +139,9 @@ public abstract class CameraBaseAPIClass {
                     PERMISSION_GRANTED))
       return true;
 
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "requestPermissions: No permission!");
+
     if (context instanceof Activity)
       if (((Activity) context).shouldShowRequestPermissionRationale(
               Manifest.permission.CAMERA) ||
@@ -184,7 +192,7 @@ public abstract class CameraBaseAPIClass {
   }
 
   public static void onRequestPermissionFinished(
-          @NonNull final Activity activity,
+          @NonNull final Context context,
           @NonNull final int[] grantResults) {
     boolean granted = true;
     if (grantResults.length > 0)
@@ -197,10 +205,10 @@ public abstract class CameraBaseAPIClass {
     final String granted_str = granted
             ? "Camera and Write External Storage Permissions Granted √"
             : "Camera or Write External Storage Permissions Denied ×";
-    Toast.makeText(activity, granted_str, Toast.LENGTH_SHORT).show();
+    Toast.makeText(context, granted_str, Toast.LENGTH_SHORT).show();
 
     if (granted)
-      getImageFromDefaultCamera(activity, isFront);
+      getImageFromDefaultCamera(context, isFront);
   }
 
   static void saveImageToDisk(@NonNull final byte[] data,
@@ -237,5 +245,12 @@ public abstract class CameraBaseAPIClass {
       values.put(MediaStore.Images.Media.IS_PENDING, 0);
       resolver.update(item, values, null, null);
     }
+  }
+
+  public static void trimMemory() {
+    Camera1APIHelper.trimMemory();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+      Camera2APIHelper.trimMemory();
+
   }
 }

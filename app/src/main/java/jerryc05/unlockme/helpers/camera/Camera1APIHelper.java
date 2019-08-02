@@ -6,17 +6,19 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.PictureCallback;
 import android.os.Build;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import jerryc05.unlockme.BuildConfig;
-import jerryc05.unlockme.helpers.UserInterface;
 
-final class Camera1APIHelper extends CameraBaseAPIClass {
+import static jerryc05.unlockme.helpers.UserInterface.showExceptionToNotification;
+import static jerryc05.unlockme.helpers.UserInterface.showExceptionToNotificationNoRethrow;
 
-  private static final String          TAG          =
-          Camera1APIHelper.class.getSimpleName();
+public final class Camera1APIHelper extends CameraBaseAPIClass {
+
+  private static final String          TAG          = "Camera1APIHelper";
   private static       int             predefinedFacing;
   private static       int             cameraID;
   private static       Camera          mCamera;
@@ -26,11 +28,20 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
   @SuppressWarnings("WeakerAccess")
   static               SurfaceTexture  surfaceTexture;
 
-  static void getImage(final int facing, @NonNull final Context context) {
-    predefinedFacing = facing;
-    setupCamera1();
-    openCamera1(context);
-    captureCamera1(context);
+  static void getImage(int facing, @NonNull final Context context) {
+    try {
+      predefinedFacing = facing;
+      setupCamera1();
+      openCamera1(context);
+      captureCamera1(context);
+
+      if (Looper.myLooper() == null)
+        Looper.prepare();
+      Looper.loop();
+    } catch (Exception e) {
+      showExceptionToNotificationNoRethrow(e.toString(),
+              "Camera1APIHelper#getImage()", context);
+    }
   }
 
   private static void setupCamera1() {
@@ -55,36 +66,49 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
         mCamera.enableShutterSound(false);
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotification(
+      showExceptionToNotification(
               e.toString(), "openCamera1()", context);
     }
   }
 
   @SuppressWarnings("WeakerAccess")
   static void captureCamera1(@NonNull final Context context) {
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "captureCamera1: ");
+
     try {
-      if (surfaceTexture == null)
-        surfaceTexture =
-                new SurfaceTexture(-1);
-      mCamera.setPreviewTexture(surfaceTexture);
+      mCamera.setPreviewTexture(getSurfaceTexture());
       mCamera.startPreview();
+      if (BuildConfig.DEBUG)
+        Log.d(TAG, "captureCamera1: Preview started!");
       mCamera.takePicture(null, null,
               getJpegPictureCallback(context));
+      if (BuildConfig.DEBUG)
+        Log.d(TAG, "captureCamera1: Take picture called!!");
       captureCount++;
 
     } catch (final Exception e) {
       closeCamera1(mCamera);
-      UserInterface.showExceptionToNotification(
+      showExceptionToNotification(
               e.toString(), "captureCamera1()", context);
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
-  static PictureCallback getJpegPictureCallback(@NonNull final Context context) {
+  private static SurfaceTexture getSurfaceTexture() {
+    if (surfaceTexture == null)
+      surfaceTexture = new SurfaceTexture(-1);
+    return surfaceTexture;
+  }
+
+  private static PictureCallback getJpegPictureCallback(
+          @NonNull final Context context) {
     if (mJpegPictureCallback == null)
       mJpegPictureCallback = new PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
+          if (BuildConfig.DEBUG)
+            Log.d(TAG, "onPictureTaken: ");
+
           saveImageToDisk(data, context);
 
           if (captureCount < imageCount)
@@ -97,7 +121,6 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
             }
             closeCamera1(camera);
           }
-
         }
       };
     return mJpegPictureCallback;
@@ -111,5 +134,16 @@ final class Camera1APIHelper extends CameraBaseAPIClass {
     camera.stopPreview();
     camera.release();
     mCamera = null;
+
+    final Looper myLooper = Looper.myLooper();
+    if (myLooper != null &&
+            myLooper != Looper.getMainLooper())
+      myLooper.quit();
+  }
+
+  public static void trimMemory() {
+    mCamera = null;
+    mJpegPictureCallback = null;
+    surfaceTexture = null;
   }
 }

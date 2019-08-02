@@ -14,11 +14,9 @@ import jerryc05.unlockme.services.ForegroundService;
 
 import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
 
-@SuppressWarnings("NullableProblems")
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
-  private static final String TAG =
-          MyDeviceAdminReceiver.class.getSimpleName();
+  private static final String TAG = "MyDeviceAdminReceiver";
   private static       int    failedAttempt;
 
   @Override
@@ -42,7 +40,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
     if (failedAttempt > 0)
       UserInterface.notifyToUI("Unsuccessful Unlock Attempt Captured",
               "UnlockMe captured " + failedAttempt +
-                      " attempt(s) since last successful unlock", context);
+                      " attempt(s) since last successful unlock", context); //todo didn't show
     failedAttempt = 0;
   }
 }

@@ -134,7 +134,7 @@ public final class UserInterface {
    * @param cancelNotificationID pass -1 to stop dismissing notification.
    */
   private static PendingIntent getUpdateNotificationPendingIntent(
-          final int cancelNotificationID,
+           int cancelNotificationID,
           @NonNull final Context context) {
 
     final Intent intent = new Intent(context, ForegroundService.class);
@@ -144,11 +144,11 @@ public final class UserInterface {
     final PendingIntent pendingIntent;
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
       pendingIntent = PendingIntent.getService(context,
-              ForegroundService.class.getSimpleName().hashCode(),
+              "ForegroundService".hashCode(),
               intent, PendingIntent.FLAG_UPDATE_CURRENT);
     else
       pendingIntent = PendingIntent.getForegroundService(context,
-              ForegroundService.class.getSimpleName().hashCode(),
+              "ForegroundService".hashCode(),
               intent, PendingIntent.FLAG_UPDATE_CURRENT);
     return pendingIntent;
   }
@@ -162,7 +162,7 @@ public final class UserInterface {
                     R.drawable.ic_launcher_smartphone_lock_foreground);
 
     service.startForeground(title.hashCode(),
-            UserInterface.setNotificationChannel(builder,
+            UserInterface.setNotificationChannel(builder, // todo use low priority
                     getNotificationManager(service), title,
                     "Background service notification for UnlockMe.",
                     true).build());
