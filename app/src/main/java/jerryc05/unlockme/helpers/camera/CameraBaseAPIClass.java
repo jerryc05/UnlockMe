@@ -197,7 +197,7 @@ public abstract class CameraBaseAPIClass {
     boolean granted = true;
     if (grantResults.length > 0)
       for (int result : grantResults)
-        if (result != PackageManager.PERMISSION_GRANTED) {
+        if (result != PERMISSION_GRANTED) {
           granted = false;
           break;
         }
