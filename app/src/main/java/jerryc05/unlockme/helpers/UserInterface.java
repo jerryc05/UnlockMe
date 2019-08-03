@@ -93,7 +93,7 @@ public final class UserInterface {
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
+            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground)
             .setSubText(subText)
             .setStyle(new Notification.BigTextStyle()
                     .bigText(contentText))
@@ -117,7 +117,7 @@ public final class UserInterface {
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
+            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground)
             .setStyle(new Notification.BigPictureStyle()
                     .bigPicture(BitmapFactory.decodeByteArray(
                             bytes, 0, bytes.length)))
@@ -134,7 +134,7 @@ public final class UserInterface {
    * @param cancelNotificationID pass -1 to stop dismissing notification.
    */
   private static PendingIntent getUpdateNotificationPendingIntent(
-           int cancelNotificationID,
+          int cancelNotificationID,
           @NonNull final Context context) {
 
     final Intent intent = new Intent(context, ForegroundService.class);
@@ -158,8 +158,7 @@ public final class UserInterface {
 
     final Builder builder = new Builder(service)
             .setContentTitle(title)
-            .setSmallIcon(
-                    R.drawable.ic_launcher_smartphone_lock_foreground);
+            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground);
 
     service.startForeground(title.hashCode(),
             UserInterface.setNotificationChannel(builder, // todo use low priority
@@ -178,7 +177,7 @@ public final class UserInterface {
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_smartphone_lock_foreground)
+            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground)
             .setAutoCancel(true); //todo auto cancel
 
     getNotificationManager(context).notify(id, setNotificationChannel(
