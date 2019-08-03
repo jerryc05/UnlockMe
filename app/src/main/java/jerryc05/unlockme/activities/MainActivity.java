@@ -25,10 +25,6 @@ import org.json.JSONArray;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.net.UnknownHostException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jerryc05.unlockme.BuildConfig;
@@ -39,6 +35,8 @@ import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 import jerryc05.unlockme.services.ForegroundService;
 
+import static jerryc05.unlockme.activities.MyActivity.getThreadPoolExecutor;
+import static jerryc05.unlockme.activities.MyActivity.threadPoolExecutor;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
@@ -52,8 +50,7 @@ public final class MainActivity extends Activity
           REQUEST_CODE_DEVICE_ADMIN              = 0,
           REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
-  public  ReentrantLock      requestDeviceAdminLock; // todo
-  private ThreadPoolExecutor threadPoolExecutor;
+  public ReentrantLock requestDeviceAdminLock; // todo
 
   @IntDef({REQUEST_CODE_DEVICE_ADMIN, REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL})
   @Retention(RetentionPolicy.SOURCE)
@@ -65,7 +62,7 @@ public final class MainActivity extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    getThreadPoolExecutor().execute(
+    getThreadPoolExecutor(getApplicationContext()).execute(
             new Runnable() {
               @Override
               public void run() {
@@ -172,31 +169,6 @@ public final class MainActivity extends Activity
               Context.MODE_PRIVATE).edit()
               .putBoolean(SP_KEY_PREFER_CAMERA_API_2, !isChecked)
               .apply();
-  }
-
-  private ThreadPoolExecutor getThreadPoolExecutor() {
-    if (threadPoolExecutor == null) {
-      RejectedExecutionHandler rejectedExecutionHandler
-              = new RejectedExecutionHandler() {
-        @Override
-        public void rejectedExecution(Runnable runnable,
-                                      ThreadPoolExecutor threadPoolExecutor) {
-          UserInterface.showExceptionToNotificationNoRethrow(
-                  "ThreadPoolExecutor：\n>>> "
-                          + threadPoolExecutor.toString()
-                          + "\non " + TAG + " rejected:\n >>> "
-                          + runnable.toString(),
-                  "threadPoolExecutor#rejectedExecution()",
-                  getApplicationContext());
-        }
-      };
-      final int processorCount = Runtime.getRuntime().availableProcessors();
-      threadPoolExecutor = new ThreadPoolExecutor(processorCount,
-              2 * processorCount, 5, TimeUnit.SECONDS,
-              new LinkedBlockingQueue<>(1), rejectedExecutionHandler);
-      threadPoolExecutor.allowCoreThreadTimeOut(true);
-    }
-    return threadPoolExecutor;
   }
 
   @WorkerThread
