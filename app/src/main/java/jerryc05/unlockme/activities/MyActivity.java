@@ -15,17 +15,17 @@ import jerryc05.unlockme.helpers.UserInterface;
 abstract class MyActivity extends Activity {
 
   private static final String             TAG = "MyActivity";
-   static       ThreadPoolExecutor threadPoolExecutor;
+  static               ThreadPoolExecutor threadPoolExecutor;
 
   static ThreadPoolExecutor getThreadPoolExecutor(
           @NonNull final Context context) {
     if (threadPoolExecutor == null) {
-      RejectedExecutionHandler rejectedExecutionHandler
+      final RejectedExecutionHandler rejectedExecutionHandler
               = new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable runnable,
                                       ThreadPoolExecutor threadPoolExecutor) {
-          UserInterface.showExceptionToNotificationNoRethrow(
+          UserInterface.showExceptionToNotification(
                   "ThreadPoolExecutor：\n>>> "
                           + threadPoolExecutor.toString()
                           + "\non " + TAG + " rejected:\n >>> "

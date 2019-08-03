@@ -190,11 +190,11 @@ public final class URLConnectionBuilder {
               mConnectivityManager.getNetworkCapabilities(network);
       assert networkCapabilities != null;
       if (networkCapabilities.hasTransport(
-              NetworkCapabilities.TRANSPORT_CELLULAR))
-        return TRANSPORT_CELLULAR;
-      if (networkCapabilities.hasTransport(
               NetworkCapabilities.TRANSPORT_WIFI))
         return TRANSPORT_WIFI;
+      if (networkCapabilities.hasTransport(
+              NetworkCapabilities.TRANSPORT_CELLULAR))
+        return TRANSPORT_CELLULAR;
 
       throw new IllegalStateException("TransportInfo unrecognized!");
     }

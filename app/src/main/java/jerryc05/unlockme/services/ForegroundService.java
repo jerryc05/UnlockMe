@@ -12,7 +12,6 @@ import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 
 import static jerryc05.unlockme.helpers.UserInterface.getNotificationManager;
 import static jerryc05.unlockme.helpers.UserInterface.notifyToForegroundService;
-import static jerryc05.unlockme.helpers.UserInterface.showExceptionToNotification;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.getImageFromDefaultCamera;
 
@@ -36,32 +35,27 @@ public class ForegroundService extends IntentService {
 
     notifyToForegroundService(this);
 
-    try {
-      assert intent != null;
-      final String action = intent.getAction();
-      assert action != null;
+    assert intent != null;
+    final String action = intent.getAction();
+    assert action != null;
 
-      switch (action) {
-        case ACTION_DISMISS_NOTIFICATION:
-          getNotificationManager(getApplicationContext())
-                  .cancel(intent.getIntExtra(
-                          EXTRA_CANCEL_NOTIFICATION_ID, -1));
-          break;
-        case ACTION_CAPTURE_IMAGE:
-          getImageFromDefaultCamera(getApplicationContext(),
-                  intent.getBooleanExtra(
-                          EXTRA_CAMERA_FACING, true));
-          break;
-        default:
-          throw new UnsupportedOperationException("Unknown action!");
-      }
-    } catch (final Exception e) {
-      showExceptionToNotification(e.toString(),
-              "onHandleIntent()", getApplicationContext());
-    }finally {
-      if(BuildConfig.DEBUG)
-        Log.d(TAG, "onHandleIntent: Finished! ");
+    switch (action) {
+      case ACTION_DISMISS_NOTIFICATION:
+        getNotificationManager(getApplicationContext())
+                .cancel(intent.getIntExtra(
+                        EXTRA_CANCEL_NOTIFICATION_ID, -1));
+        break;
+      case ACTION_CAPTURE_IMAGE:
+        getImageFromDefaultCamera(getApplicationContext(),
+                intent.getBooleanExtra(
+                        EXTRA_CAMERA_FACING, true));
+        break;
+      default:
+        throw new UnsupportedOperationException("Unknown action!");
     }
+
+    if (BuildConfig.DEBUG)
+      Log.d(TAG, "onHandleIntent: Finished! ");
   }
 
   @Override

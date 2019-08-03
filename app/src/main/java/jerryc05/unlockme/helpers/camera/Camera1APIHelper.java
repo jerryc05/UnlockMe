@@ -13,8 +13,7 @@ import androidx.annotation.NonNull;
 
 import jerryc05.unlockme.BuildConfig;
 
-import static jerryc05.unlockme.helpers.UserInterface.showExceptionToNotification;
-import static jerryc05.unlockme.helpers.UserInterface.showExceptionToNotificationNoRethrow;
+import static jerryc05.unlockme.helpers.UserInterface.throwExceptionAsNotification;
 
 public final class Camera1APIHelper extends CameraBaseAPIClass {
 
@@ -29,7 +28,6 @@ public final class Camera1APIHelper extends CameraBaseAPIClass {
   static               SurfaceTexture  surfaceTexture;
 
   static void getImage(int facing, @NonNull final Context context) {
-    try {
       predefinedFacing = facing;
       setupCamera1();
       openCamera1(context);
@@ -38,10 +36,6 @@ public final class Camera1APIHelper extends CameraBaseAPIClass {
       if (Looper.myLooper() == null)
         Looper.prepare();
       Looper.loop();
-    } catch (Exception e) {
-      showExceptionToNotificationNoRethrow(e.toString(),
-              "Camera1APIHelper#getImage()", context);
-    }
   }
 
   private static void setupCamera1() {
@@ -66,7 +60,7 @@ public final class Camera1APIHelper extends CameraBaseAPIClass {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
         mCamera.enableShutterSound(false);
     } catch (final Exception e) {
-      showExceptionToNotification(
+      throwExceptionAsNotification(
               e.toString(), "openCamera1()", context);
     }
   }
@@ -81,15 +75,17 @@ public final class Camera1APIHelper extends CameraBaseAPIClass {
       mCamera.startPreview();
       if (BuildConfig.DEBUG)
         Log.d(TAG, "captureCamera1: Preview started!");
+
       mCamera.takePicture(null, null,
               getJpegPictureCallback(context));
       if (BuildConfig.DEBUG)
         Log.d(TAG, "captureCamera1: Take picture called!!");
+
       captureCount++;
 
     } catch (final Exception e) {
       closeCamera1(mCamera);
-      showExceptionToNotification(
+      throwExceptionAsNotification(
               e.toString(), "captureCamera1()", context);
     }
   }

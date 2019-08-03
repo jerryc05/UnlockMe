@@ -219,12 +219,12 @@ public final class MainActivity extends Activity
       }
 
     } catch (final UnknownHostException e) {
-      UserInterface.showExceptionToNotificationNoRethrow(
+      UserInterface.showExceptionToNotification(
               "Cannot connect to github.com!\n>>> " + e.toString(),
               "checkUpdate()", getApplicationContext());
 
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotificationNoRethrow(
+      UserInterface.showExceptionToNotification(
               e.toString(), "checkUpdate()", getApplicationContext());
 
     } finally {

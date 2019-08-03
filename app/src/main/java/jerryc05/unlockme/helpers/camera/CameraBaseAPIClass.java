@@ -9,7 +9,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
@@ -108,7 +107,7 @@ public abstract class CameraBaseAPIClass {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       final String ERROR_MSG =
               "Cannot use Camera2 API on devices lower than Lollipop";
-      UserInterface.showExceptionToNotification(ERROR_MSG,
+      UserInterface.throwExceptionAsNotification(ERROR_MSG,
               "CameraBaseAPIClass#getImageFromCamera2()", context);
       throw new UnsupportedOperationException(ERROR_MSG);
     }
@@ -121,15 +120,19 @@ public abstract class CameraBaseAPIClass {
 
   public static boolean requestPermissions(
           @NonNull final Context context) {
-    if (!context.getPackageManager()
-            .hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)) {
-      UserInterface.showExceptionToDialog(new UnsupportedOperationException(
-              "requestPermissions() Camera device not found!"), context);
-    }
+//    if (!context.getPackageManager()
+//            .hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)) {
+//      if (BuildConfig.DEBUG)
+//        Log.d(TAG, "requestPermissions: " + Arrays.toString(
+//                context.getPackageManager().getSystemAvailableFeatures()));
+//
+//      UserInterface.throwExceptionAsDialog(new UnsupportedOperationException(
+//              "requestPermissions() Camera device not found!"), context);
+//    }
 
     if (!Environment.MEDIA_MOUNTED.equals(
             Environment.getExternalStorageState()))
-      UserInterface.showExceptionToDialog(new UnsupportedOperationException(
+      UserInterface.throwExceptionAsDialog(new UnsupportedOperationException(
               "requestPermissions() External storage not writable!"), context);
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
@@ -236,7 +239,7 @@ public abstract class CameraBaseAPIClass {
     try (final OutputStream outputStream = resolver.openOutputStream(item)) {
       Objects.requireNonNull(outputStream).write(data);
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotification(e.toString(),
+      UserInterface.throwExceptionAsNotification(e.toString(),
               "saveImageToDisk()", context);
     }
 

@@ -44,9 +44,9 @@ import static jerryc05.unlockme.services.ForegroundService.EXTRA_CANCEL_NOTIFICA
 public final class UserInterface {
 
   @SuppressWarnings("unused")
-  public static void showExceptionToDialog(
+  public static void throwExceptionAsDialog(
           @NonNull final Exception e, @NonNull final Context context) {
-    showExceptionToDialog(e, new OnClickListener() {
+    throwExceptionAsDialog(e, new OnClickListener() {
       @Override
       public void onClick(DialogInterface dialogInterface, int i) {
         throw new UnsupportedOperationException(e);
@@ -55,7 +55,7 @@ public final class UserInterface {
   }
 
   @SuppressWarnings("WeakerAccess")
-  public static void showExceptionToDialog(
+  public static void throwExceptionAsDialog(
           @NonNull final Exception e,
           @NonNull final OnClickListener onClickListener,
           @NonNull final Context context) {
@@ -76,14 +76,14 @@ public final class UserInterface {
     });
   }
 
-  public static void showExceptionToNotification(
+  public static void throwExceptionAsNotification(
           @NonNull final String contentText, @Nullable final String subText,
           @NonNull final Context context) {
-    showExceptionToNotificationNoRethrow(contentText, subText, context);
+    showExceptionToNotification(contentText, subText, context);
     throw new UnsupportedOperationException(contentText);
   }
 
-  public static void showExceptionToNotificationNoRethrow(
+  public static void showExceptionToNotification(
           @NonNull final String contentText, @Nullable final String subText,
           @NonNull final Context context) {
     final String title = "Crash Report";

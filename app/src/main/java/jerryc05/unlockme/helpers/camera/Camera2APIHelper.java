@@ -82,11 +82,11 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
           }
         }
       } catch (final Exception e) {
-        UserInterface.showExceptionToNotification(
+        UserInterface.throwExceptionAsNotification(
                 e.toString(), "getCameraIDAndCharacteristics", context);
       }
     if (cameraID == null)
-      UserInterface.showExceptionToNotification(
+      UserInterface.throwExceptionAsNotification(
               "getCameraIDAndCharacteristics() cannot find Front Camera!",
               "getCameraIDAndCharacteristics", context);
   }
@@ -119,7 +119,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
         @Override
         public void onError(@NonNull final CameraDevice cameraDevice, int error) {
           onDisconnected(cameraDevice);
-          UserInterface.showExceptionToNotification(
+          UserInterface.throwExceptionAsNotification(
                   "openCameraStateCallback#onError() returns error code: "
                           + error + '!', "onError()", context);
         }
@@ -137,7 +137,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
                 getOpenCameraStateCallback(context), null);
         Looper.loop();
       } catch (final Exception e) {
-        UserInterface.showExceptionToNotification(e.toString(),
+        UserInterface.throwExceptionAsNotification(e.toString(),
                 "openCamera2()", context);
       }
   }
@@ -148,7 +148,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
               getImageReader(context).getSurface()),
               getCaptureStillImageStateCallback(context), null);
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotification(e.toString(),
+      UserInterface.throwExceptionAsNotification(e.toString(),
               "captureStillImage()", context);
     }
   }
@@ -195,7 +195,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
         @Override
         public void onConfigureFailed(
                 @NonNull final CameraCaptureSession session) {
-          UserInterface.showExceptionToNotification(
+          UserInterface.throwExceptionAsNotification(
                   "$mStateCallback returns onConfigureFailed()",
                   "onConfigureFailed()",
                   context);
@@ -211,7 +211,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
       captureCount++;
 
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotification(e.toString(),
+      UserInterface.throwExceptionAsNotification(e.toString(),
               "mCaptureStillImageStateCallback#onConfigured()",
               context);
     }
