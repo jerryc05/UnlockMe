@@ -2,8 +2,6 @@ package jerryc05.unlockme.helpers;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.util.Log;
@@ -44,6 +42,10 @@ public final class URLConnectionBuilder {
 
   private final static String
           TAG = "URLConnectionBuilder";
+
+  public final static String
+          WIFI_ONLY_EXCEPTION_PROMPT =
+          "Wifi-only mode is on. Cannot connect through cellular data!";
 
   private final static int
           TRANSPORT_CELLULAR = 0,
@@ -100,16 +102,16 @@ public final class URLConnectionBuilder {
 
   public URLConnectionBuilder connect(@NonNull final Context context)
           throws IOException {
-    if (BuildConfig.DEBUG)
-      Log.d(TAG, "connect: " + urlConnection.getURL());
 
     checkNullUrlConnection("run");
-    if (!wifiOnly || getNetworkType(context) == TRANSPORT_WIFI)
+    if (!wifiOnly || getNetworkType(context) == TRANSPORT_WIFI) {
+      if (BuildConfig.DEBUG)
+        Log.d(TAG, "connect: " + urlConnection.getURL());
+
       (isHTTP ? urlConnection
               : (HttpsURLConnection) urlConnection).connect();
-    else
-      throw new IllegalStateException(
-              "Wifi-only mode is on. Cannot connect through cellular data!");
+    } else
+      throw new IllegalStateException(WIFI_ONLY_EXCEPTION_PROMPT);
     return this;
   }
 
@@ -122,7 +124,7 @@ public final class URLConnectionBuilder {
                 ? urlConnection
                 : (HttpsURLConnection) urlConnection).getInputStream();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        byte[]                buffer       = new byte[1024];
+        byte[]                buffer       = new byte[4*1024];
         int                   length;
 
         while ((length = inputStream.read(buffer)) != -1)
@@ -171,33 +173,39 @@ public final class URLConnectionBuilder {
             context.getSystemService(Context.CONNECTIVITY_SERVICE);
     assert mConnectivityManager != null;
 
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-      final NetworkInfo mNetworkInfo =
-              mConnectivityManager.getActiveNetworkInfo();
-      assert mNetworkInfo != null;
+//    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+    final NetworkInfo mNetworkInfo =
+            mConnectivityManager.getActiveNetworkInfo();
+    assert mNetworkInfo != null;
 
-      if (mNetworkInfo.isConnected())
-        return mNetworkInfo.getType();
-      else
-        throw new IllegalStateException("Network disconnected!");
+    if (mNetworkInfo.isConnected()) {
+      final int networkType = mNetworkInfo.getType();
 
-    } else {
-      final Network network = mConnectivityManager.getActiveNetwork();
-      if (network == null)
-        throw new IllegalStateException("No active network!");
+      if (BuildConfig.DEBUG)
+        Log.d(TAG, "getNetworkType: " + networkType);
 
-      final NetworkCapabilities networkCapabilities =
-              mConnectivityManager.getNetworkCapabilities(network);
-      assert networkCapabilities != null;
-      if (networkCapabilities.hasTransport(
-              NetworkCapabilities.TRANSPORT_WIFI))
-        return TRANSPORT_WIFI;
-      if (networkCapabilities.hasTransport(
-              NetworkCapabilities.TRANSPORT_CELLULAR))
-        return TRANSPORT_CELLULAR;
+      return networkType;
+    } else
+      throw new IllegalStateException("Network disconnected!");
 
-      throw new IllegalStateException("TransportInfo unrecognized!");
-    }
+//    } else {
+//      final Network network = mConnectivityManager.getActiveNetwork();
+//      if (network == null)
+//        throw new IllegalStateException("No active network!");
+//
+//      final NetworkCapabilities networkCapabilities =
+//              mConnectivityManager.getNetworkCapabilities(network);
+//      assert networkCapabilities != null;
+//      if (networkCapabilities.hasTransport(
+//              NetworkCapabilities.TRANSPORT_WIFI))
+//        return TRANSPORT_WIFI;
+//      if (networkCapabilities.hasTransport(
+//              NetworkCapabilities.TRANSPORT_CELLULAR))
+//        return TRANSPORT_CELLULAR;
+//
+//      throw new IllegalStateException("TransportInfo unrecognized!");
+//    }
+    // commented out because hard to use and unstable
   }
 
   @SuppressWarnings("WeakerAccess")

@@ -66,8 +66,9 @@ public final class DeviceAdminHelper {
       final DialogInterface.OnClickListener onClickListener =
               new DialogInterface.OnClickListener() {
                 @Override
-                public void onClick(final DialogInterface dialog,
+                public void onClick(@NonNull final DialogInterface dialogInterface,
                                     int which) {
+                  dialogInterface.dismiss();
                   System.exit(1);
                 }
               };

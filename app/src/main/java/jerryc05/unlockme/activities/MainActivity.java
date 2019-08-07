@@ -1,6 +1,5 @@
 package jerryc05.unlockme.activities;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -35,13 +34,12 @@ import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 import jerryc05.unlockme.services.ForegroundService;
 
-import static jerryc05.unlockme.activities.MyActivity.getThreadPoolExecutor;
-import static jerryc05.unlockme.activities.MyActivity.threadPoolExecutor;
+import static jerryc05.unlockme.helpers.URLConnectionBuilder.WIFI_ONLY_EXCEPTION_PROMPT;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
 
-public final class MainActivity extends Activity
+public final class MainActivity extends _MyActivity
         implements OnClickListener, OnCheckedChangeListener {
 
   final static        String
@@ -118,7 +116,7 @@ public final class MainActivity extends Activity
   @Override
   protected void onActivityResult(@RequestCodes int requestCode,
                                   int resultCode,
-                                  @Nullable Intent data) {
+                                  @Nullable final Intent data) {
     if (requestCode == RESULT_CANCELED &&
             resultCode == REQUEST_CODE_DEVICE_ADMIN)
       DeviceAdminHelper.onRequestPermissionFinished(this); //todo
@@ -126,7 +124,7 @@ public final class MainActivity extends Activity
 
   @Override
   public void onRequestPermissionsResult(@RequestCodes int requestCode,
-                                         @NonNull String[] permissions,
+                                         @NonNull final String[] permissions,
                                          @NonNull int[] grantResults) {
     if (requestCode == REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL)
       CameraBaseAPIClass.onRequestPermissionFinished(
@@ -134,7 +132,7 @@ public final class MainActivity extends Activity
   }
 
   @Override
-  public void onClick(@NonNull View view) {
+  public void onClick(@NonNull final View view) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onClick: ");
 
@@ -162,7 +160,7 @@ public final class MainActivity extends Activity
   }
 
   @Override
-  public void onCheckedChanged(@NonNull CompoundButton buttonView,
+  public void onCheckedChanged(@NonNull final CompoundButton buttonView,
                                boolean isChecked) {
     if (buttonView.getId() == R.id.activity_main_api1Switch)
       getSharedPreferences(CameraBaseAPIClass.SP_NAME_CAMERA,
@@ -196,8 +194,9 @@ public final class MainActivity extends Activity
         final DialogInterface.OnClickListener positive =
                 new DialogInterface.OnClickListener() {
                   @Override
-                  public void onClick(DialogInterface dialogInterface,
+                  public void onClick(@NonNull final DialogInterface dialogInterface,
                                       int i) {
+                    dialogInterface.dismiss();
                     startActivity(new Intent(Intent.ACTION_VIEW,
                             Uri.parse(tagURL + latest)));
                   }
@@ -224,8 +223,9 @@ public final class MainActivity extends Activity
               "checkUpdate()", getApplicationContext());
 
     } catch (final Exception e) {
-      UserInterface.showExceptionToNotification(
-              e.toString(), "checkUpdate()", getApplicationContext());
+      if (!WIFI_ONLY_EXCEPTION_PROMPT.equals(e.getMessage()))
+        UserInterface.showExceptionToNotification(
+                e.toString(), "checkUpdate()", getApplicationContext());
 
     } finally {
       if (connectionBuilder != null)

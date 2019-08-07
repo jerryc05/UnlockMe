@@ -48,7 +48,8 @@ public final class UserInterface {
           @NonNull final Exception e, @NonNull final Context context) {
     throwExceptionAsDialog(e, new OnClickListener() {
       @Override
-      public void onClick(DialogInterface dialogInterface, int i) {
+      public void onClick(@NonNull final DialogInterface dialogInterface, int i) {
+        dialogInterface.dismiss();
         throw new UnsupportedOperationException(e);
       }
     }, context);

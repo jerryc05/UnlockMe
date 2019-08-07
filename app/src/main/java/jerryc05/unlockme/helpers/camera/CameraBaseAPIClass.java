@@ -179,8 +179,9 @@ public abstract class CameraBaseAPIClass {
     return new OnClickListener() {
       @SuppressLint("NewApi")
       @Override
-      public void onClick(DialogInterface dialogInterface,
+      public void onClick(@NonNull final DialogInterface dialogInterface,
                           int i) {
+        dialogInterface.dismiss();
         activity.requestPermissions(getPermissionsArray(),
                 REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
       }

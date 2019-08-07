@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 
 import jerryc05.unlockme.helpers.UserInterface;
 
-abstract class MyActivity extends Activity {
+abstract class _MyActivity extends Activity {
 
-  private static final String             TAG = "MyActivity";
+  private static final String             TAG = "_MyActivity";
   static               ThreadPoolExecutor threadPoolExecutor;
 
   static ThreadPoolExecutor getThreadPoolExecutor(
