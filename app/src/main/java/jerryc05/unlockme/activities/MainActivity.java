@@ -42,9 +42,9 @@ import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
 public final class MainActivity extends _MyActivity
         implements OnClickListener, OnCheckedChangeListener {
 
-  final static        String
+  private final static String
           TAG                                    = "MainActivity";
-  public final static int
+  public final static  int
           REQUEST_CODE_DEVICE_ADMIN              = 0,
           REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1;
 
@@ -60,27 +60,19 @@ public final class MainActivity extends _MyActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    getThreadPoolExecutor(getApplicationContext()).execute(
-            new Runnable() {
-              @Override
-              public void run() {
-                findViewById(R.id.activity_main_button_front)
-                        .setOnClickListener(MainActivity.this);
-                findViewById(R.id.activity_main_button_back)
-                        .setOnClickListener(MainActivity.this);
-                findViewById(R.id.activity_main_button_stopService)
-                        .setOnClickListener(MainActivity.this);
+    getThreadPoolExecutor(getApplicationContext()).execute(() -> {
+              findViewById(R.id.activity_main_button_front)
+                      .setOnClickListener(MainActivity.this);
+              findViewById(R.id.activity_main_button_back)
+                      .setOnClickListener(MainActivity.this);
+              findViewById(R.id.activity_main_button_stopService)
+                      .setOnClickListener(MainActivity.this);
 
-                final Switch forceAPI1 = findViewById(R.id.activity_main_api1Switch);
-                forceAPI1.setOnCheckedChangeListener(MainActivity.this);
-                runOnUiThread(new Runnable() {
-                  @Override
-                  public void run() {
-                    forceAPI1.setChecked(!CameraBaseAPIClass.getPreferCamera2(
-                            getApplicationContext()));
-                  }
-                });
-              }
+              final Switch forceAPI1 = findViewById(R.id.activity_main_api1Switch);
+              forceAPI1.setOnCheckedChangeListener(MainActivity.this);
+              runOnUiThread(() ->
+                      forceAPI1.setChecked(!CameraBaseAPIClass
+                              .getPreferCamera2(getApplicationContext())));
             }
     );
   }
@@ -89,14 +81,11 @@ public final class MainActivity extends _MyActivity
   protected void onStart() {
     super.onStart();
 
-    threadPoolExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        if (requestDeviceAdminLock != null)
-          requestDeviceAdminLock.lock();
-        DeviceAdminHelper.requestPermission(MainActivity.this); //todo
-        checkUpdate();
-      }
+    threadPoolExecutor.execute(() -> {
+      if (requestDeviceAdminLock != null)
+        requestDeviceAdminLock.lock();
+      DeviceAdminHelper.requestPermission(MainActivity.this); //todo
+      checkUpdate();
     });
   }
 
@@ -106,11 +95,6 @@ public final class MainActivity extends _MyActivity
 
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onDestroy: ");
-
-    if (threadPoolExecutor != null) {
-      threadPoolExecutor.shutdownNow();
-      threadPoolExecutor = null;
-    }
   }
 
   @Override
@@ -136,25 +120,22 @@ public final class MainActivity extends _MyActivity
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onClick: ");
 
-    threadPoolExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        final int id = view.getId();
-        final Intent intent = new Intent(MainActivity.this,
-                ForegroundService.class);
+    threadPoolExecutor.execute(() -> {
+      final int id = view.getId();
+      final Intent intent = new Intent(MainActivity.this,
+              ForegroundService.class);
 
-        if (id == R.id.activity_main_button_stopService)
-          stopService(intent);
+      if (id == R.id.activity_main_button_stopService)
+        stopService(intent);
 
-        else if (CameraBaseAPIClass.requestPermissions(MainActivity.this)) {
-          intent.setAction(ACTION_CAPTURE_IMAGE);
-          intent.putExtra(EXTRA_CAMERA_FACING,
-                  id == R.id.activity_main_button_front);
-          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            startService(intent);
-          else
-            startForegroundService(intent);
-        }
+      else if (CameraBaseAPIClass.requestPermissions(MainActivity.this)) {
+        intent.setAction(ACTION_CAPTURE_IMAGE);
+        intent.putExtra(EXTRA_CAMERA_FACING,
+                id == R.id.activity_main_button_front);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+          startService(intent);
+        else
+          startForegroundService(intent);
       }
     });
   }
@@ -170,7 +151,7 @@ public final class MainActivity extends _MyActivity
   }
 
   @WorkerThread
-  void checkUpdate() {
+  private void checkUpdate() {
     URLConnectionBuilder connectionBuilder = null;
     try {
       final String
@@ -191,41 +172,31 @@ public final class MainActivity extends _MyActivity
           Log.d(TAG, "checkUpdate: " + latest);
 
         final String tagURL = "https://github.com/jerryc05/UnlockMe/releases/tag/v";
-        final DialogInterface.OnClickListener positive =
-                new DialogInterface.OnClickListener() {
-                  @Override
-                  public void onClick(@NonNull final DialogInterface dialogInterface,
-                                      int i) {
-                    dialogInterface.dismiss();
-                    startActivity(new Intent(Intent.ACTION_VIEW,
-                            Uri.parse(tagURL + latest)));
-                  }
-                };
+        final DialogInterface.OnClickListener positive = (dialogInterface, i) -> {
+          dialogInterface.dismiss();
+          startActivity(new Intent(Intent.ACTION_VIEW,
+                  Uri.parse(tagURL + latest)));
+        };
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
+                .setTitle("New Version Available")
+                .setMessage("Do you want to upgrade from\n\tv" +
+                        BuildConfig.VERSION_NAME + "  to  v" + latest + '?')
+                .setPositiveButton("YES", positive)
+                .setNegativeButton("NO", null)
+                .setIcon(R.drawable.ic_round_info);
 
-        runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("New Version Available")
-                    .setMessage("Do you want to upgrade from\n\tv" +
-                            BuildConfig.VERSION_NAME + "  to  v" + latest + '?')
-                    .setPositiveButton("YES", positive)
-                    .setNegativeButton("NO", null)
-                    .setIcon(R.drawable.ic_round_info)
-                    .show();
-          }
-        });
+        runOnUiThread(builder::show);
       }
 
     } catch (final UnknownHostException e) {
-      UserInterface.showExceptionToNotification(
+      UserInterface.showExceptionToNotification(getApplicationContext(),
               "Cannot connect to github.com!\n>>> " + e.toString(),
-              "checkUpdate()", getApplicationContext());
+              "checkUpdate()");
 
     } catch (final Exception e) {
       if (!WIFI_ONLY_EXCEPTION_PROMPT.equals(e.getMessage()))
-        UserInterface.showExceptionToNotification(
-                e.toString(), "checkUpdate()", getApplicationContext());
+        UserInterface.showExceptionToNotification(getApplicationContext(),
+                e.toString(), "checkUpdate()");
 
     } finally {
       if (connectionBuilder != null)

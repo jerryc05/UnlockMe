@@ -10,7 +10,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -44,49 +43,41 @@ import static jerryc05.unlockme.services.ForegroundService.EXTRA_CANCEL_NOTIFICA
 public final class UserInterface {
 
   @SuppressWarnings("unused")
-  public static void throwExceptionAsDialog(
-          @NonNull final Exception e, @NonNull final Context context) {
-    throwExceptionAsDialog(e, new OnClickListener() {
-      @Override
-      public void onClick(@NonNull final DialogInterface dialogInterface, int i) {
-        dialogInterface.dismiss();
-        throw new UnsupportedOperationException(e);
-      }
-    }, context);
-  }
-
-  @SuppressWarnings("WeakerAccess")
-  public static void throwExceptionAsDialog(
-          @NonNull final Exception e,
-          @NonNull final OnClickListener onClickListener,
-          @NonNull final Context context) {
-    if (!(context instanceof Activity))
-      return;
-
-    ((Activity) context).runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        new AlertDialog.Builder(context)
-                .setTitle("Crash Report")
-                .setMessage(e.toString())
-                .setIcon(R.drawable.ic_round_error)
-                .setCancelable(false)
-                .setPositiveButton("OK", onClickListener)
-                .show();
-      }
+  public static void throwExceptionAsDialog(@NonNull final Context context,
+                                            @NonNull final Exception e) {
+    throwExceptionAsDialog(context, e, (dialogInterface, i) -> {
+      dialogInterface.dismiss();
+      throw new UnsupportedOperationException(e);
     });
   }
 
-  public static void throwExceptionAsNotification(
-          @NonNull final String contentText, @Nullable final String subText,
-          @NonNull final Context context) {
-    showExceptionToNotification(contentText, subText, context);
+  @SuppressWarnings("WeakerAccess")
+  public static void throwExceptionAsDialog(@NonNull final Context context,
+                                            @NonNull final Exception e,
+                                            @NonNull final OnClickListener onClickListener) {
+    if (!(context instanceof Activity))
+      return;
+
+    final AlertDialog.Builder builder = new AlertDialog.Builder(context)
+            .setTitle("Crash Report")
+            .setMessage(e.toString())
+            .setIcon(R.drawable.ic_round_error)
+            .setCancelable(false)
+            .setPositiveButton("OK", onClickListener);
+
+    ((Activity) context).runOnUiThread(builder::show);
+  }
+
+  public static void throwExceptionAsNotification(@NonNull final Context context,
+                                                  @NonNull final String contentText,
+                                                  @Nullable final String subText) {
+    showExceptionToNotification(context, contentText, subText);
     throw new UnsupportedOperationException(contentText);
   }
 
-  public static void showExceptionToNotification(
-          @NonNull final String contentText, @Nullable final String subText,
-          @NonNull final Context context) {
+  public static void showExceptionToNotification(@NonNull final Context context,
+                                                 @NonNull final String contentText,
+                                                 @Nullable final String subText) {
     final String title = "Crash Report";
     final int    id    = title.hashCode();
 
@@ -188,8 +179,7 @@ public final class UserInterface {
             true).build());
   }
 
-  @SuppressWarnings("WeakerAccess")
-  static Builder setNotificationChannel(
+  private static Builder setNotificationChannel(
           @NonNull final Builder builder,
           @NonNull final NotificationManager notificationManager,
           @NonNull final String channelID, @Nullable final String desc,

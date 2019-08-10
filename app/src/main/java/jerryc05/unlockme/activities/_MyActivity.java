@@ -21,19 +21,13 @@ abstract class _MyActivity extends Activity {
           @NonNull final Context context) {
     if (threadPoolExecutor == null) {
       final RejectedExecutionHandler rejectedExecutionHandler
-              = new RejectedExecutionHandler() {
-        @Override
-        public void rejectedExecution(Runnable runnable,
-                                      ThreadPoolExecutor threadPoolExecutor) {
-          UserInterface.showExceptionToNotification(
-                  "ThreadPoolExecutor：\n>>> "
-                          + threadPoolExecutor.toString()
-                          + "\non " + TAG + " rejected:\n >>> "
-                          + runnable.toString(),
-                  "threadPoolExecutor#rejectedExecution()",
-                  context);
-        }
-      };
+              = (runnable, threadPoolExecutor) ->
+              UserInterface.showExceptionToNotification(context,
+                      "ThreadPoolExecutor：\n>>> "
+                              + threadPoolExecutor.toString()
+                              + "\non " + TAG + " rejected:\n >>> "
+                              + runnable.toString(),
+                      "threadPoolExecutor#rejectedExecution()");
       final int processorCount = Runtime.getRuntime().availableProcessors();
       threadPoolExecutor = new ThreadPoolExecutor(processorCount,
               2 * processorCount, 5, TimeUnit.SECONDS,
@@ -41,5 +35,15 @@ abstract class _MyActivity extends Activity {
       threadPoolExecutor.allowCoreThreadTimeOut(true);
     }
     return threadPoolExecutor;
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+
+    if (threadPoolExecutor != null) {
+      threadPoolExecutor.shutdownNow();
+      threadPoolExecutor = null;
+    }
   }
 }

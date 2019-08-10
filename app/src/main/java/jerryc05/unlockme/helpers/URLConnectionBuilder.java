@@ -47,11 +47,13 @@ public final class URLConnectionBuilder {
           WIFI_ONLY_EXCEPTION_PROMPT =
           "Wifi-only mode is on. Cannot connect through cellular data!";
 
-  private final static int
+  @SuppressWarnings({"unused", "WeakerAccess", "RedundantSuppression"})
+  public final static int
           TRANSPORT_CELLULAR = 0,
           TRANSPORT_WIFI     = 1;
 
-  final static String
+  @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
+  public final static String
           METHOD_GET     = "GET",
           METHOD_POST    = "POST",
           METHOD_HEAD    = "HEAD",
@@ -63,10 +65,11 @@ public final class URLConnectionBuilder {
   private boolean isHTTP, wifiOnly = true;
   private URLConnection urlConnection;
 
+  @SuppressWarnings("WeakerAccess")
   @StringDef({METHOD_GET, METHOD_POST, METHOD_HEAD, METHOD_OPTIONS,
           METHOD_PUT, METHOD_DELETE, METHOD_TRACE})
   @Retention(RetentionPolicy.SOURCE)
-  @interface RequestMethods {
+  public  @interface RequestMethods {
   }
 
   private URLConnectionBuilder(@NonNull String baseURL)

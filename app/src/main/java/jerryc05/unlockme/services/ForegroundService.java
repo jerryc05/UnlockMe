@@ -17,9 +17,9 @@ import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.getImageFromDe
 
 public class ForegroundService extends IntentService {
 
-  static final        String
+  private static final String
           TAG                          = "ForegroundService";
-  public static final String
+  public static final  String
           ACTION_DISMISS_NOTIFICATION  = "ACTION_DISMISS_NOTIFICATION",
           ACTION_CAPTURE_IMAGE         = "ACTION_CAPTURE_IMAGE",
           EXTRA_CANCEL_NOTIFICATION_ID = "EXTRA_CANCEL_NOTIFICATION_ID";

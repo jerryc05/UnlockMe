@@ -1,13 +1,11 @@
 package jerryc05.unlockme.helpers.camera;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
@@ -19,6 +17,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringDef;
 import androidx.annotation.WorkerThread;
 
@@ -107,8 +106,8 @@ public abstract class CameraBaseAPIClass {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       final String ERROR_MSG =
               "Cannot use Camera2 API on devices lower than Lollipop";
-      UserInterface.throwExceptionAsNotification(ERROR_MSG,
-              "CameraBaseAPIClass#getImageFromCamera2()", context);
+      UserInterface.throwExceptionAsNotification(context, ERROR_MSG,
+              "CameraBaseAPIClass#getImageFromCamera2()");
       throw new UnsupportedOperationException(ERROR_MSG);
     }
 
@@ -132,8 +131,8 @@ public abstract class CameraBaseAPIClass {
 
     if (!Environment.MEDIA_MOUNTED.equals(
             Environment.getExternalStorageState()))
-      UserInterface.throwExceptionAsDialog(new UnsupportedOperationException(
-              "requestPermissions() External storage not writable!"), context);
+      UserInterface.throwExceptionAsDialog(context, new UnsupportedOperationException(
+              "requestPermissions() External storage not writable!"));
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
             (context.checkSelfPermission(Manifest.permission.CAMERA) ==
@@ -151,21 +150,17 @@ public abstract class CameraBaseAPIClass {
               ((Activity) context).shouldShowRequestPermissionRationale(
                       Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 
-        ((Activity) context).runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            new AlertDialog.Builder(context)
-                    .setTitle("Permission Required")
-                    .setMessage("We need the following permissions to work properly:\n" +
-                            "\n-\t\tCAMERA\n-\t\tWRITE_EXTERNAL_STORAGE")
-                    .setIcon(R.drawable.ic_round_warning)
-                    .setCancelable(false)
-                    .setPositiveButton("OK",
-                            getRequestPermissionRationaleOnClickListener(
-                                    ((Activity) context)))
-                    .show();
-          }
-        });
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                .setTitle("Permission Required")
+                .setMessage("We need the following permissions to work properly:\n" +
+                        "\n-\t\tCAMERA\n-\t\tWRITE_EXTERNAL_STORAGE")
+                .setIcon(R.drawable.ic_round_warning)
+                .setCancelable(false)
+                .setPositiveButton("OK",
+                        getRequestPermissionRationaleOnClickListener(
+                                ((Activity) context)));
+
+        ((Activity) context).runOnUiThread(builder::show);
       } else
         ((Activity) context).requestPermissions(getPermissionsArray(),
                 REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
@@ -173,23 +168,17 @@ public abstract class CameraBaseAPIClass {
     return false;
   }
 
-  @SuppressWarnings("WeakerAccess")
-  static OnClickListener getRequestPermissionRationaleOnClickListener(
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  private static OnClickListener getRequestPermissionRationaleOnClickListener(
           @NonNull final Activity activity) {
-    return new OnClickListener() {
-      @SuppressLint("NewApi")
-      @Override
-      public void onClick(@NonNull final DialogInterface dialogInterface,
-                          int i) {
-        dialogInterface.dismiss();
-        activity.requestPermissions(getPermissionsArray(),
-                REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
-      }
+    return (dialogInterface, i) -> {
+      dialogInterface.dismiss();
+      activity.requestPermissions(getPermissionsArray(),
+              REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL);
     };
   }
 
-  @SuppressWarnings("WeakerAccess")
-  static String[] getPermissionsArray() {
+  private static String[] getPermissionsArray() {
     return new String[]{
             Manifest.permission.CAMERA,
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
@@ -240,8 +229,8 @@ public abstract class CameraBaseAPIClass {
     try (final OutputStream outputStream = resolver.openOutputStream(item)) {
       Objects.requireNonNull(outputStream).write(data);
     } catch (final Exception e) {
-      UserInterface.throwExceptionAsNotification(e.toString(),
-              "saveImageToDisk()", context);
+      UserInterface.throwExceptionAsNotification(context, e.toString(),
+              "saveImageToDisk()");
     }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

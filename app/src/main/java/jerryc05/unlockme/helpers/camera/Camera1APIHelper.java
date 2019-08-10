@@ -15,27 +15,25 @@ import jerryc05.unlockme.BuildConfig;
 
 import static jerryc05.unlockme.helpers.UserInterface.throwExceptionAsNotification;
 
-public final class Camera1APIHelper extends CameraBaseAPIClass {
+final class Camera1APIHelper extends CameraBaseAPIClass {
 
   private static final String          TAG          = "Camera1APIHelper";
   private static       int             predefinedFacing;
   private static       int             cameraID;
   private static       Camera          mCamera;
   private static       PictureCallback mJpegPictureCallback;
-  @SuppressWarnings("WeakerAccess")
-  static               int             captureCount = 0;
-  @SuppressWarnings("WeakerAccess")
-  static               SurfaceTexture  surfaceTexture;
+  private static       int             captureCount = 0;
+  private static       SurfaceTexture  surfaceTexture;
 
   static void getImage(int facing, @NonNull final Context context) {
-      predefinedFacing = facing;
-      setupCamera1();
-      openCamera1(context);
-      captureCamera1(context);
+    predefinedFacing = facing;
+    setupCamera1();
+    openCamera1(context);
+    captureCamera1(context);
 
-      if (Looper.myLooper() == null)
-        Looper.prepare();
-      Looper.loop();
+    if (Looper.myLooper() == null)
+      Looper.prepare();
+    Looper.loop();
   }
 
   private static void setupCamera1() {
@@ -60,13 +58,12 @@ public final class Camera1APIHelper extends CameraBaseAPIClass {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
         mCamera.enableShutterSound(false);
     } catch (final Exception e) {
-      throwExceptionAsNotification(
-              e.toString(), "openCamera1()", context);
+      throwExceptionAsNotification(context,
+              e.toString(), "openCamera1()");
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
-  static void captureCamera1(@NonNull final Context context) {
+  private static void captureCamera1(@NonNull final Context context) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "captureCamera1: ");
 
@@ -85,8 +82,8 @@ public final class Camera1APIHelper extends CameraBaseAPIClass {
 
     } catch (final Exception e) {
       closeCamera1(mCamera);
-      throwExceptionAsNotification(
-              e.toString(), "captureCamera1()", context);
+      throwExceptionAsNotification(context, e.toString(),
+              "captureCamera1()");
     }
   }
 
@@ -99,31 +96,27 @@ public final class Camera1APIHelper extends CameraBaseAPIClass {
   private static PictureCallback getJpegPictureCallback(
           @NonNull final Context context) {
     if (mJpegPictureCallback == null)
-      mJpegPictureCallback = new PictureCallback() {
-        @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
-          if (BuildConfig.DEBUG)
-            Log.d(TAG, "onPictureTaken: ");
+      mJpegPictureCallback = (data, camera) -> {
+        if (BuildConfig.DEBUG)
+          Log.d(TAG, "onPictureTaken: ");
 
-          saveImageToDisk(data, context);
+        saveImageToDisk(data, context);
 
-          if (captureCount < imageCount)
-            captureCamera1(context);
-          else {
-            captureCount = 0;
-            if (surfaceTexture != null) {
-              surfaceTexture.release();
-              surfaceTexture = null;
-            }
-            closeCamera1(camera);
+        if (captureCount < imageCount)
+          captureCamera1(context);
+        else {
+          captureCount = 0;
+          if (surfaceTexture != null) {
+            surfaceTexture.release();
+            surfaceTexture = null;
           }
+          closeCamera1(camera);
         }
       };
     return mJpegPictureCallback;
   }
 
-  @SuppressWarnings("WeakerAccess")
-  static void closeCamera1(@NonNull final Camera camera) {
+  private static void closeCamera1(@NonNull final Camera camera) {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "closeCamera1: ");
 

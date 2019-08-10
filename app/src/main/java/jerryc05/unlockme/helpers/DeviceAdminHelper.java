@@ -22,9 +22,9 @@ import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_DEVICE_ADMI
 
 public final class DeviceAdminHelper {
 
-  private static final String        deviceAdminPermissionExplanation =
+  public static final String        deviceAdminPermissionExplanation =
           "We need DEVICE ADMIN permission to work properly.";
-  private static       ComponentName mComponentName;
+  private static      ComponentName mComponentName;
 
   public static void requestPermission(
           @NonNull final MainActivity activity) {
@@ -42,13 +42,9 @@ public final class DeviceAdminHelper {
       intentDeviceAdmin.putExtra(EXTRA_ADD_EXPLANATION,
               deviceAdminPermissionExplanation);
 
-      activity.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          activity.startActivityForResult(intentDeviceAdmin,
-                  REQUEST_CODE_DEVICE_ADMIN);
-        }
-      });
+      activity.runOnUiThread(() ->
+              activity.startActivityForResult(
+                      intentDeviceAdmin, REQUEST_CODE_DEVICE_ADMIN));
     } else
       mComponentName = null;
   }
@@ -64,13 +60,9 @@ public final class DeviceAdminHelper {
       activity.requestDeviceAdminLock.lock();
 
       final DialogInterface.OnClickListener onClickListener =
-              new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(@NonNull final DialogInterface dialogInterface,
-                                    int which) {
-                  dialogInterface.dismiss();
-                  System.exit(1);
-                }
+              (dialogInterface, which) -> {
+                dialogInterface.dismiss();
+                System.exit(1);
               };
 
       new AlertDialog.Builder(activity)

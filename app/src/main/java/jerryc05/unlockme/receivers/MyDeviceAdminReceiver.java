@@ -7,8 +7,10 @@ import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import jerryc05.unlockme.BuildConfig;
+import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.services.ForegroundService;
 
@@ -42,5 +44,23 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
               "UnlockMe captured " + failedAttempt +
                       " attempt(s) since last successful unlock", context); //todo didn't show
     failedAttempt = 0;
+  }
+
+  @Override
+  public void onEnabled(@NonNull final Context context,
+                        @NonNull final Intent intent) {
+  }
+
+  @Nullable
+  @Override
+  public CharSequence onDisableRequested(@NonNull final Context context,
+                                         @NonNull final Intent intent) {
+    return DeviceAdminHelper.deviceAdminPermissionExplanation
+            + " Or it will not work properly!";
+  }
+
+  @Override
+  public void onDisabled(@NonNull final Context context,
+                         @NonNull final Intent intent) {
   }
 }
