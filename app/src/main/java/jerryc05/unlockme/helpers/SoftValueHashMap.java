@@ -3,27 +3,26 @@ package jerryc05.unlockme.helpers;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("unused")
-public final class WeakValueHashMap<K, V> implements Map<K, V> {
+public final class SoftValueHashMap<K, V> implements Map<K, V> {
 
-  private final HashMap<K, WeakReference<V>> map;
+  private final HashMap<K, SoftReference<V>> map;
 
-  public WeakValueHashMap(int initialCapacity, float loadFactor) {
+  public SoftValueHashMap(int initialCapacity, float loadFactor) {
     map = new HashMap<>(initialCapacity, loadFactor);
   }
 
   @Nullable
   @Override
   public V get(@Nullable final Object o) {
-    final WeakReference<V> wr = map.get(o);
-    if (wr == null) return null;
-    final V val = wr.get();
+    final SoftReference<V> sr = map.get(o);
+    if (sr == null) return null;
+    final V val = sr.get();
     if (val == null) //noinspection SuspiciousMethodCalls
       map.remove(o);
     return val;
@@ -33,7 +32,7 @@ public final class WeakValueHashMap<K, V> implements Map<K, V> {
   @Override
   public V put(@NonNull final K k, @NonNull final V v) {
     final V old = get(k);
-    map.put(k, new WeakReference<>(v));
+    map.put(k, new SoftReference<>(v));
     return old;
   }
 

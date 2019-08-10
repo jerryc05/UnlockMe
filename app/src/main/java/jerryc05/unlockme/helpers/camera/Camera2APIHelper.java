@@ -30,6 +30,7 @@ import androidx.annotation.RequiresApi;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
@@ -39,7 +40,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
 
   private static final String                             TAG          =
           "Camera2APIHelper";
-  private static       int                                predefinedFacing;
+  private static       int                                facing;
   private static       String                             cameraID;
   private static       CameraManager                      mCameraManager;
   @SuppressWarnings("WeakerAccess")
@@ -57,35 +58,32 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
   static               int                                captureCount = 0;
 
   static void getImage(int facing, @NonNull final Context context) {
-    predefinedFacing = facing;
+    Camera2APIHelper.facing = facing;
     setupCamera2(context);
     openCamera2(context);
   }
 
   private static void setupCamera2(@NonNull final Context context) {
-    getCameraIDAndCharacteristics(context);
-  }
+    if (cameraID != null) return;
 
-  private static void getCameraIDAndCharacteristics(@NonNull final Context context) {
-    if (cameraID == null)
-      try {
-        for (String eachCameraID : getCameraManager(context).getCameraIdList()) {
+    try {
+      for (String eachCameraID : getCameraManager(context).getCameraIdList()) {
 
-          final CameraCharacteristics eachCameraCharacteristics =
-                  mCameraManager.getCameraCharacteristics(eachCameraID);
-          final Integer FACING = eachCameraCharacteristics.get(
-                  CameraCharacteristics.LENS_FACING);
+        final CameraCharacteristics eachCameraCharacteristics =
+                mCameraManager.getCameraCharacteristics(eachCameraID);
+        int FACING = Objects.requireNonNull(eachCameraCharacteristics.get(
+                CameraCharacteristics.LENS_FACING));
 
-          if (FACING != null && FACING == predefinedFacing) {
-            cameraID = eachCameraID;
-            mCameraCharacteristics = eachCameraCharacteristics;
-            break;
-          }
+        if (FACING == facing) {
+          cameraID = eachCameraID;
+          mCameraCharacteristics = eachCameraCharacteristics;
+          break;
         }
-      } catch (final Exception e) {
-        UserInterface.throwExceptionAsNotification(context,
-                e.toString(), "getCameraIDAndCharacteristics");
       }
+    } catch (final Exception e) {
+      UserInterface.throwExceptionAsNotification(context,
+              e.toString(), "getCameraIDAndCharacteristics");
+    }
     if (cameraID == null)
       UserInterface.throwExceptionAsNotification(context,
               "getCameraIDAndCharacteristics() cannot find Front Camera!",
@@ -240,7 +238,7 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
 
     if (context instanceof Activity)
       mCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,
-              (predefinedFacing == CameraCharacteristics.LENS_FACING_FRONT
+              (facing == CameraCharacteristics.LENS_FACING_FRONT
                       ? getFrontOrientationsMap()
                       : getBackOrientationsMap()).get(
                       ((Activity) context).getWindowManager()
@@ -283,8 +281,8 @@ final class Camera2APIHelper extends CameraBaseAPIClass {
         final ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         final byte[]     bytes  = new byte[buffer.capacity()];
         buffer.get(bytes);
-        saveImageToDisk(bytes, context);
         image.close();
+        saveImageToDisk(bytes, context);
       };
     return onImageAvailableListener;
   }
