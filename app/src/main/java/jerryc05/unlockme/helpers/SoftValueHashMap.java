@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("unused")
 public final class SoftValueHashMap<K, V> implements Map<K, V> {
 
   private final HashMap<K, SoftReference<V>> map;

@@ -35,7 +35,7 @@ import java.util.Objects;
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.UserInterface;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 final class Camera2APIHelper extends CameraBaseAPIClass {
 
   private static final String                             TAG          =
