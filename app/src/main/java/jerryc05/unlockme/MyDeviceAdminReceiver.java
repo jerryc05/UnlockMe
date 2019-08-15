@@ -1,4 +1,4 @@
-package jerryc05.unlockme.receivers;
+package jerryc05.unlockme;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
@@ -9,12 +9,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.UserInterface;
-import jerryc05.unlockme.services.ForegroundService;
 
-import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
+import static jerryc05.unlockme.MyIntentService.ACTION_CAPTURE_IMAGE;
 
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
@@ -27,7 +25,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onPasswordFailed: ");
 
-    intent = new Intent(context, ForegroundService.class);
+    intent = new Intent(context, MyIntentService.class);
     intent.setAction(ACTION_CAPTURE_IMAGE);
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)

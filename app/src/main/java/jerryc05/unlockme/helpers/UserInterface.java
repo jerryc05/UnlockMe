@@ -19,12 +19,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
+import jerryc05.unlockme.MyIntentService;
 import jerryc05.unlockme.R;
-import jerryc05.unlockme.services.ForegroundService;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
-import static jerryc05.unlockme.services.ForegroundService.ACTION_DISMISS_NOTIFICATION;
-import static jerryc05.unlockme.services.ForegroundService.EXTRA_CANCEL_NOTIFICATION_ID;
+import static jerryc05.unlockme.MyIntentService.ACTION_DISMISS_NOTIFICATION;
+import static jerryc05.unlockme.MyIntentService.EXTRA_CANCEL_NOTIFICATION_ID;
 
 /**
  * A collection class for commonly used User Interface methods.
@@ -129,7 +129,7 @@ public final class UserInterface {
           int cancelNotificationID,
           @NonNull final Context context) {
 
-    final Intent intent = new Intent(context, ForegroundService.class);
+    final Intent intent = new Intent(context, MyIntentService.class);
     intent.setAction(ACTION_DISMISS_NOTIFICATION);
     intent.putExtra(EXTRA_CANCEL_NOTIFICATION_ID, cancelNotificationID);
 

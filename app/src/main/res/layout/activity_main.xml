@@ -27,12 +27,4 @@
         android:layout_below="@+id/activity_main_button_back"
         android:layout_centerHorizontal="true"
         android:text="Force Camera1 API?" />
-
-    <Button
-        android:id="@+id/activity_main_button_stopService"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/activity_main_api1Switch"
-        android:layout_centerHorizontal="true"
-        android:text="Stop Background Service!" />
 </RelativeLayout>

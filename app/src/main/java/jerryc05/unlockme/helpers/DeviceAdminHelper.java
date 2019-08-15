@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.activities.MainActivity;
-import jerryc05.unlockme.receivers.MyDeviceAdminReceiver;
+import jerryc05.unlockme.MyDeviceAdminReceiver;
 
 import static android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION;
 import static android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN;

@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 
 import jerryc05.unlockme.R;
 
-public class SettingActivity extends _MyActivity {
+public class SettingActivity extends _MyBaseActivity {
 
   @Override
   protected void onCreate(@Nullable final Bundle savedInstanceState) {

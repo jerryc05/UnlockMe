@@ -1,4 +1,4 @@
-package jerryc05.unlockme.services;
+package jerryc05.unlockme;
 
 import android.app.IntentService;
 import android.content.ComponentCallbacks2;
@@ -7,7 +7,6 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 
 import static jerryc05.unlockme.helpers.UserInterface.getNotificationManager;
@@ -15,7 +14,7 @@ import static jerryc05.unlockme.helpers.UserInterface.notifyToForegroundService;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.getImageFromDefaultCamera;
 
-public class ForegroundService extends IntentService {
+public class MyIntentService extends IntentService {
 
   private static final String
           TAG                          = "ForegroundService";
@@ -24,7 +23,7 @@ public class ForegroundService extends IntentService {
           ACTION_CAPTURE_IMAGE         = "ACTION_CAPTURE_IMAGE",
           EXTRA_CANCEL_NOTIFICATION_ID = "EXTRA_CANCEL_NOTIFICATION_ID";
 
-  public ForegroundService() {
+  public MyIntentService() {
     super(TAG);
   }
 

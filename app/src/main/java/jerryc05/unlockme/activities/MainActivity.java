@@ -27,19 +27,19 @@ import java.net.UnknownHostException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jerryc05.unlockme.BuildConfig;
+import jerryc05.unlockme.MyIntentService;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.DeviceAdminHelper;
 import jerryc05.unlockme.helpers.URLConnectionBuilder;
 import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
-import jerryc05.unlockme.services.ForegroundService;
 
+import static jerryc05.unlockme.MyIntentService.ACTION_CAPTURE_IMAGE;
 import static jerryc05.unlockme.helpers.URLConnectionBuilder.WIFI_ONLY_EXCEPTION_PROMPT;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
-import static jerryc05.unlockme.services.ForegroundService.ACTION_CAPTURE_IMAGE;
 
-public final class MainActivity extends _MyActivity
+public final class MainActivity extends _MyBaseActivity
         implements OnClickListener, OnCheckedChangeListener {
 
   private final static String
@@ -64,8 +64,6 @@ public final class MainActivity extends _MyActivity
               findViewById(R.id.activity_main_button_front)
                       .setOnClickListener(MainActivity.this);
               findViewById(R.id.activity_main_button_back)
-                      .setOnClickListener(MainActivity.this);
-              findViewById(R.id.activity_main_button_stopService)
                       .setOnClickListener(MainActivity.this);
 
               final Switch forceAPI1 = findViewById(R.id.activity_main_api1Switch);
@@ -123,12 +121,9 @@ public final class MainActivity extends _MyActivity
     threadPoolExecutor.execute(() -> {
       final int id = view.getId();
       final Intent intent = new Intent(MainActivity.this,
-              ForegroundService.class);
+              MyIntentService.class);
 
-      if (id == R.id.activity_main_button_stopService)
-        stopService(intent);
-
-      else if (CameraBaseAPIClass.requestPermissions(MainActivity.this)) {
+      if (CameraBaseAPIClass.requestPermissions(MainActivity.this)) {
         intent.setAction(ACTION_CAPTURE_IMAGE);
         intent.putExtra(EXTRA_CAMERA_FACING,
                 id == R.id.activity_main_button_front);
