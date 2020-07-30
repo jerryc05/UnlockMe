@@ -114,9 +114,9 @@ class MainActivity :
       }
 
       val byteArrOS = ByteArrayOutputStream()
-      val outputOptions =
-        ImageCapture.OutputFileOptions.Builder(byteArrOS).build()
-      val imgSavedCallback = object : ImageCapture.OnImageSavedCallback {
+      val outputOptions = ImageCapture.OutputFileOptions.Builder(byteArrOS).build()
+
+      class OnImgSavedCB : ImageCapture.OnImageSavedCallback {
         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
           val msg = "Photo capture succeeded (${byteArrOS.size()} bytes) @ ${output.savedUri}"
           runOnUiThread {
@@ -130,7 +130,7 @@ class MainActivity :
         }
       }
 
-      imageCapture.takePicture(outputOptions, threadPoolExecutor, imgSavedCallback)
+      imageCapture.takePicture(outputOptions, threadPoolExecutor, OnImgSavedCB())
 
     } catch (exc: Exception) {
       Log.d(TAG, "Use case binding failed", exc)

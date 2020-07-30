@@ -3,7 +3,6 @@ package jerryc05.unlockme
 import android.app.admin.DeviceAdminReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import jerryc05.unlockme.helpers.DeviceAdminHelper
 import jerryc05.unlockme.helpers.UserInterface
@@ -13,6 +12,7 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
   companion object {
     private const val TAG = "MyDeviceAdminReceiver"
     private var failedAttempt = 0
+    private const val THRESHOLD = 1
   }
 
   override fun onPasswordFailed(context: Context, intent: Intent) {
@@ -32,10 +32,11 @@ class MyDeviceAdminReceiver : DeviceAdminReceiver() {
     if (BuildConfig.DEBUG)
       Log.d(TAG, "onPasswordSucceeded: ${++failedAttempt} failed attempt(s) on record.")
 
-    if (failedAttempt > 0) {
-      UserInterface.notifyToUI(        "Unsuccessful Unlock Attempt Captured",
-        "UnlockMe captured " + failedAttempt +
-                " attempt(s) since last successful unlock", context      ) //todo didn't show
+    if (failedAttempt > THRESHOLD) {
+      UserInterface.notifyToUI(
+        "Unsuccessful Unlock Attempt Captured",
+        "$failedAttempt attempt(s) since last successful unlock", context
+      ) //todo didn't show
       failedAttempt = 0
     }
   }
