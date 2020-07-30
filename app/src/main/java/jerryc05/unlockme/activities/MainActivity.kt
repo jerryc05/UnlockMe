@@ -27,7 +27,8 @@ class MainActivity :
     private const val TAG = "MainActivity"
     const val REQUEST_CODE_DEVICE_ADMIN = 0
     const val REQUEST_CODE_CAMERA_AND_WRITE_EXTERNAL = 1
-    lateinit var imageCapture: ImageCapture
+    private lateinit var imageCapture: ImageCapture
+    private lateinit var cameraProvider: ProcessCameraProvider
   }
 
   //  var mRequestDeviceAdminLock: ReentrantLock? = null
@@ -51,42 +52,15 @@ class MainActivity :
 
     // init camera
     threadPoolExecutor.execute {
-      val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-
-      cameraProviderFuture.addListener({
-        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
-        val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
-        imageCapture = ImageCapture.Builder()
-          .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-          .apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-              display?.rotation?.let { setTargetRotation(it) }
-            }
+      cameraProvider = ProcessCameraProvider.getInstance(this).get()
+      imageCapture = ImageCapture.Builder()
+        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+        .apply {
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display?.rotation?.let { setTargetRotation(it) }
           }
-          .build()
-
-//        val ana = ImageAnalysis.Builder().build()
-//          .apply {
-//            setAnalyzer(threadPoolExecutor, { image ->
-//              image.close()
-//            })
-//          }
-
-        try {
-          runOnUiThread {
-            cameraProvider.unbindAll()
-            val camera = cameraProvider.bindToLifecycle(
-              this, cameraSelector, imageCapture
-            )
-          }
-        } catch (exc: Exception) {
-          Log.d(TAG, "Use case binding failed", exc)
         }
-
-      }, threadPoolExecutor)
-
+        .build()
     }
   }
 
@@ -124,44 +98,42 @@ class MainActivity :
 
     threadPoolExecutor.execute {
       when (view.id) {
-        R.id.activity_main_button_front -> {
-          val byteArrOS = ByteArrayOutputStream()
+        R.id.activity_main_button_front -> takePicture(CameraSelector.DEFAULT_FRONT_CAMERA)
+        R.id.activity_main_button_back -> takePicture(CameraSelector.DEFAULT_BACK_CAMERA)
+      }
+    }
+  }
 
-          val outputOptions =
-            ImageCapture.OutputFileOptions.Builder(byteArrOS).build()
+  private fun takePicture(cameraSelector: CameraSelector) {
+    try {
+      runOnUiThread {
+        cameraProvider.unbindAll()
+        cameraProvider.bindToLifecycle(
+          this, cameraSelector, imageCapture
+        )
+      }
 
-          val imgSavedCallback = object : ImageCapture.OnImageSavedCallback {
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-              val msg = "Photo capture succeeded (${byteArrOS.size()} bytes) @ ${output.savedUri}"
-              runOnUiThread {
-                Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
-              }
-              Log.d(TAG, msg)
-            }
-
-            override fun onError(exc: ImageCaptureException) {
-              Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-            }
+      val byteArrOS = ByteArrayOutputStream()
+      val outputOptions =
+        ImageCapture.OutputFileOptions.Builder(byteArrOS).build()
+      val imgSavedCallback = object : ImageCapture.OnImageSavedCallback {
+        override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+          val msg = "Photo capture succeeded (${byteArrOS.size()} bytes) @ ${output.savedUri}"
+          runOnUiThread {
+            Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
           }
+          Log.d(TAG, msg)
+        }
 
-          imageCapture.takePicture(outputOptions, threadPoolExecutor, imgSavedCallback)
+        override fun onError(exc: ImageCaptureException) {
+          Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
         }
       }
 
+      imageCapture.takePicture(outputOptions, threadPoolExecutor, imgSavedCallback)
 
-//      final int id = view.getId();
-//      final Intent intent = new Intent(MainActivity.this,
-//      MyIntentService.class);
-
-//      if (CameraBaseAPIClass.requestPermissions(this)) {
-//        intent.setAction(ACTION_CAPTURE_IMAGE);
-//        intent.putExtra(EXTRA_CAMERA_FACING,
-//          id == R.id.activity_main_button_front);
-//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-//          startService(intent);
-//        else
-//          startForegroundService(intent);
-//      }
+    } catch (exc: Exception) {
+      Log.d(TAG, "Use case binding failed", exc)
     }
   }
 
