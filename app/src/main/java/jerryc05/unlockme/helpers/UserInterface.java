@@ -7,24 +7,21 @@ import android.app.Notification;
 import android.app.Notification.Builder;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface.OnClickListener;
-import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
-import jerryc05.unlockme.MyIntentService;
 import jerryc05.unlockme.R;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
-import static jerryc05.unlockme.MyIntentService.ACTION_DISMISS_NOTIFICATION;
-import static jerryc05.unlockme.MyIntentService.EXTRA_CANCEL_NOTIFICATION_ID;
+
+//import jerryc05.unlockme.MyIntentService;
+//import static jerryc05.unlockme.MyIntentService.ACTION_DISMISS_NOTIFICATION;
+//import static jerryc05.unlockme.MyIntentService.EXTRA_CANCEL_NOTIFICATION_ID;
 
 /**
  * A collection class for commonly used User Interface methods.
@@ -78,86 +75,86 @@ public final class UserInterface {
   public static void showExceptionToNotification(@NonNull final Context context,
                                                  @NonNull final String contentText,
                                                  @Nullable final String subText) {
-    final String title = "Crash Report";
-    final int    id    = title.hashCode();
-
-    final Builder builder = new Builder(context)
-            .setContentTitle(title)
-            .setTicker(title)
-            .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground)
-            .setSubText(subText)
-            .setStyle(new Notification.BigTextStyle()
-                    .bigText(contentText))
-            .setContentIntent(getUpdateNotificationPendingIntent(id, context));
-
-    getNotificationManager(context).notify(id, setNotificationChannel(
-            builder, getNotificationManager(context),
-            "Crash Report",
-            "Crash report notification channel for UnlockMe",
-            true).build());
+//    final String title = "Crash Report";
+//    final int    id    = title.hashCode();
+//
+//    final Builder builder = new Builder(context)
+//            .setContentTitle(title)
+//            .setTicker(title)
+//            .setContentText(contentText)
+//            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground)
+//            .setSubText(subText)
+//            .setStyle(new Notification.BigTextStyle()
+//                    .bigText(contentText))
+//            .setContentIntent(getUpdateNotificationPendingIntent(id, context));
+//
+//    getNotificationManager(context).notify(id, setNotificationChannel(
+//            builder, getNotificationManager(context),
+//            "Crash Report",
+//            "Crash report notification channel for UnlockMe",
+//            true).build());
   }
 
   @SuppressWarnings("unused")
   public static void notifyPictureToUI(@NonNull final String contentText,
                                        @NonNull final byte[] bytes,
                                        @NonNull final Context context) {
-    final String title = "Picture Taken";
-    final int    id    = title.hashCode();
-
-    final Builder builder = new Builder(context)
-            .setContentTitle(title)
-            .setTicker(title)
-            .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground)
-            .setStyle(new Notification.BigPictureStyle()
-                    .bigPicture(BitmapFactory.decodeByteArray(
-                            bytes, 0, bytes.length)))
-            .setContentIntent(getUpdateNotificationPendingIntent(id, context));
-
-    getNotificationManager(context).notify(id, setNotificationChannel(
-            builder, getNotificationManager(context),
-            "Image Captured Report",
-            "Image captured report notification channel for UnlockMe",
-            false).build());
+//    final String title = "Picture Taken";
+//    final int    id    = title.hashCode();
+//
+//    final Builder builder = new Builder(context)
+//            .setContentTitle(title)
+//            .setTicker(title)
+//            .setContentText(contentText)
+//            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground)
+//            .setStyle(new Notification.BigPictureStyle()
+//                    .bigPicture(BitmapFactory.decodeByteArray(
+//                            bytes, 0, bytes.length)))
+//            .setContentIntent(getUpdateNotificationPendingIntent(id, context));
+//
+//    getNotificationManager(context).notify(id, setNotificationChannel(
+//            builder, getNotificationManager(context),
+//            "Image Captured Report",
+//            "Image captured report notification channel for UnlockMe",
+//            false).build());
   }
 
-  /**
-   * @param cancelNotificationID pass -1 to stop dismissing notification.
-   */
-  private static PendingIntent getUpdateNotificationPendingIntent(
-          int cancelNotificationID,
-          @NonNull final Context context) {
+//  /**
+//   * @param cancelNotificationID pass -1 to stop dismissing notification.
+//   */
+//  private static PendingIntent getUpdateNotificationPendingIntent(
+//          int cancelNotificationID,
+//          @NonNull final Context context) {
+//
+//    final Intent intent = new Intent(context, MyIntentService.class);
+//    intent.setAction(ACTION_DISMISS_NOTIFICATION);
+//    intent.putExtra(EXTRA_CANCEL_NOTIFICATION_ID, cancelNotificationID);
+//
+//    final PendingIntent pendingIntent;
+//    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+//      pendingIntent = PendingIntent.getService(context,
+//              "ForegroundService".hashCode(),
+//              intent, PendingIntent.FLAG_UPDATE_CURRENT);
+//    else
+//      pendingIntent = PendingIntent.getForegroundService(context,
+//              "ForegroundService".hashCode(),
+//              intent, PendingIntent.FLAG_UPDATE_CURRENT);
+//    return pendingIntent;
+//  }
 
-    final Intent intent = new Intent(context, MyIntentService.class);
-    intent.setAction(ACTION_DISMISS_NOTIFICATION);
-    intent.putExtra(EXTRA_CANCEL_NOTIFICATION_ID, cancelNotificationID);
-
-    final PendingIntent pendingIntent;
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-      pendingIntent = PendingIntent.getService(context,
-              "ForegroundService".hashCode(),
-              intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    else
-      pendingIntent = PendingIntent.getForegroundService(context,
-              "ForegroundService".hashCode(),
-              intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    return pendingIntent;
-  }
-
-  public static void notifyToForegroundService(@NonNull final Service service) {
-    final String title = "Background Service";
-
-    final Builder builder = new Builder(service)
-            .setContentTitle(title)
-            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground);
-
-    service.startForeground(title.hashCode(),
-            UserInterface.setNotificationChannel(builder, // todo use low priority
-                    getNotificationManager(service), title,
-                    "Background service notification for UnlockMe.",
-                    true).build());
-  }
+//  public static void notifyToForegroundService(@NonNull final Service service) {
+//    final String title = "Background Service";
+//
+//    final Builder builder = new Builder(service)
+//            .setContentTitle(title)
+//            .setSmallIcon(R.drawable.ic_launcher_cctv_foreground);
+//
+//    service.startForeground(title.hashCode(),
+//            UserInterface.setNotificationChannel(builder, // todo use low priority
+//                    getNotificationManager(service), title,
+//                    "Background service notification for UnlockMe.",
+//                    true).build());
+//  }
 
   @SuppressWarnings("unused")
   public static void notifyToUI(@NonNull final String title,

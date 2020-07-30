@@ -10,11 +10,10 @@ import android.content.Intent;
 import androidx.annotation.NonNull;
 
 import java.util.Objects;
-import java.util.concurrent.locks.ReentrantLock;
 
+import jerryc05.unlockme.MyDeviceAdminReceiver;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.activities.MainActivity;
-import jerryc05.unlockme.MyDeviceAdminReceiver;
 
 import static android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION;
 import static android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN;
@@ -23,15 +22,15 @@ import static jerryc05.unlockme.activities.MainActivity.REQUEST_CODE_DEVICE_ADMI
 public final class DeviceAdminHelper {
 
   public static final String        deviceAdminPermissionExplanation =
-          "We need DEVICE ADMIN permission to work properly.";
+          "We need DEVICE ADMIN permission to work properly.";  //todo i18n
   private static      ComponentName mComponentName;
 
   public static void requestPermission(
           @NonNull final MainActivity activity) {
-    if (activity.requestDeviceAdminLock != null) {
-      activity.requestDeviceAdminLock.unlock();
-      activity.requestDeviceAdminLock = null;
-    }
+//    if (activity.mRequestDeviceAdminLock != null) {
+//      activity.mRequestDeviceAdminLock.unlock();
+//      activity.mRequestDeviceAdminLock = null;
+//    }
 
     if (!getDevicePolicyManager(activity).isAdminActive(
             getComponentName(activity))) {
@@ -55,9 +54,9 @@ public final class DeviceAdminHelper {
 
     if (!getDevicePolicyManager(applicationContext)
             .isAdminActive(getComponentName(applicationContext))) {
-      if (activity.requestDeviceAdminLock == null)
-        activity.requestDeviceAdminLock = new ReentrantLock();
-      activity.requestDeviceAdminLock.lock();
+//      if (activity.mRequestDeviceAdminLock == null)
+//        activity.mRequestDeviceAdminLock = new ReentrantLock();
+//      activity.mRequestDeviceAdminLock.lock();
 
       final DialogInterface.OnClickListener onClickListener =
               (dialogInterface, which) -> {

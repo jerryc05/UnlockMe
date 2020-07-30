@@ -45,9 +45,9 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name=".MyIntentService"
-            android:exported="false"/>
+<!--        <service-->
+<!--            android:name=".MyIntentService"-->
+<!--            android:exported="false"/>-->
     </application>
 
 </manifest>
