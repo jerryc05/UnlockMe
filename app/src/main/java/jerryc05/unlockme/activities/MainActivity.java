@@ -1,10 +1,7 @@
 package jerryc05.unlockme.activities;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,25 +14,18 @@ import android.widget.Switch;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
-
-import org.json.JSONArray;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.net.UnknownHostException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jerryc05.unlockme.BuildConfig;
 import jerryc05.unlockme.MyIntentService;
 import jerryc05.unlockme.R;
 import jerryc05.unlockme.helpers.DeviceAdminHelper;
-import jerryc05.unlockme.helpers.URLConnectionBuilder;
-import jerryc05.unlockme.helpers.UserInterface;
 import jerryc05.unlockme.helpers.camera.CameraBaseAPIClass;
 
 import static jerryc05.unlockme.MyIntentService.ACTION_CAPTURE_IMAGE;
-import static jerryc05.unlockme.helpers.URLConnectionBuilder.WIFI_ONLY_EXCEPTION_PROMPT;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.EXTRA_CAMERA_FACING;
 import static jerryc05.unlockme.helpers.camera.CameraBaseAPIClass.SP_KEY_PREFER_CAMERA_API_2;
 
@@ -83,7 +73,7 @@ public final class MainActivity extends _MyBaseActivity
       if (requestDeviceAdminLock != null)
         requestDeviceAdminLock.lock();
       DeviceAdminHelper.requestPermission(MainActivity.this); //todo
-      checkUpdate();
+//      checkUpdate();
     });
   }
 
@@ -145,57 +135,57 @@ public final class MainActivity extends _MyBaseActivity
               .apply();
   }
 
-  @WorkerThread
-  private void checkUpdate() {
-    URLConnectionBuilder connectionBuilder = null;
-    try {
-      final String
-              URL = "https://api.github.com/repos/jerryc05/UnlockMe/tags";
-      connectionBuilder = URLConnectionBuilder
-              .get(URL)
-              .setConnectTimeout(1000)
-              .setReadTimeout(1000)
-              .setUseCache(false)
-              .connect(getApplicationContext());
-
-      final String latest = new JSONArray(connectionBuilder.getResult())
-              .getJSONObject(0)
-              .getString("name").substring(1);
-
-      if (!latest.equals(BuildConfig.VERSION_NAME)) {
-        if (BuildConfig.DEBUG)
-          Log.d(TAG, "checkUpdate: " + latest);
-
-        final String tagURL = "https://github.com/jerryc05/UnlockMe/releases/tag/v";
-        final DialogInterface.OnClickListener positive = (dialogInterface, i) -> {
-          dialogInterface.dismiss();
-          startActivity(new Intent(Intent.ACTION_VIEW,
-                  Uri.parse(tagURL + latest)));
-        };
-        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
-                .setTitle("New Version Available")
-                .setMessage("Do you want to upgrade from\n\tv" +
-                        BuildConfig.VERSION_NAME + "  to  v" + latest + '?')
-                .setPositiveButton("YES", positive)
-                .setNegativeButton("NO", null)
-                .setIcon(R.drawable.ic_round_info);
-
-        runOnUiThread(builder::show);
-      }
-
-    } catch (final UnknownHostException e) {
-      UserInterface.showExceptionToNotification(getApplicationContext(),
-              "Cannot connect to github.com!\n>>> " + e.toString(),
-              "checkUpdate()");
-
-    } catch (final Exception e) {
-      if (!WIFI_ONLY_EXCEPTION_PROMPT.equals(e.getMessage()))
-        UserInterface.showExceptionToNotification(getApplicationContext(),
-                e.toString(), "checkUpdate()");
-
-    } finally {
-      if (connectionBuilder != null)
-        connectionBuilder.disconnect();
-    }
-  }
+//  @WorkerThread
+//  private void checkUpdate() {
+//    URLConnectionBuilder connectionBuilder = null;
+//    try {
+//      final String
+//              URL = "https://api.github.com/repos/jerryc05/UnlockMe/tags";
+//      connectionBuilder = URLConnectionBuilder
+//              .get(URL)
+//              .setConnectTimeout(1000)
+//              .setReadTimeout(1000)
+//              .setUseCache(false)
+//              .connect(getApplicationContext());
+//
+//      final String latest = new JSONArray(connectionBuilder.getResult())
+//              .getJSONObject(0)
+//              .getString("name").substring(1);
+//
+//      if (!latest.equals(BuildConfig.VERSION_NAME)) {
+//        if (BuildConfig.DEBUG)
+//          Log.d(TAG, "checkUpdate: " + latest);
+//
+//        final String tagURL = "https://github.com/jerryc05/UnlockMe/releases/tag/v";
+//        final DialogInterface.OnClickListener positive = (dialogInterface, i) -> {
+//          dialogInterface.dismiss();
+//          startActivity(new Intent(Intent.ACTION_VIEW,
+//                  Uri.parse(tagURL + latest)));
+//        };
+//        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
+//                .setTitle("New Version Available")
+//                .setMessage("Do you want to upgrade from\n\tv" +
+//                        BuildConfig.VERSION_NAME + "  to  v" + latest + '?')
+//                .setPositiveButton("YES", positive)
+//                .setNegativeButton("NO", null)
+//                .setIcon(R.drawable.ic_round_info);
+//
+//        runOnUiThread(builder::show);
+//      }
+//
+//    } catch (final UnknownHostException e) {
+//      UserInterface.showExceptionToNotification(getApplicationContext(),
+//              "Cannot connect to github.com!\n>>> " + e.toString(),
+//              "checkUpdate()");
+//
+//    } catch (final Exception e) {
+//      if (!WIFI_ONLY_EXCEPTION_PROMPT.equals(e.getMessage()))
+//        UserInterface.showExceptionToNotification(getApplicationContext(),
+//                e.toString(), "checkUpdate()");
+//
+//    } finally {
+//      if (connectionBuilder != null)
+//        connectionBuilder.disconnect();
+//    }
+//  }
 }

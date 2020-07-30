@@ -1,38 +1,68 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    compileSdkVersion 30
+
     defaultConfig {
-        applicationId "jerryc05.unlockme"
-        minSdkVersion 16
-        targetSdkVersion 29
+        applicationId "io.jerryc05.unlockme"
+        minSdkVersion 24
+        targetSdkVersion 30
         versionCode 1
         versionName "0.4.0"
+        resConfigs "xxhdpi", "en-rUS", "zh-rCN"
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        resConfigs "xxhdpi"
     }
+
     buildTypes {
         release {
             zipAlignEnabled true
             shrinkResources true
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+        debug {
+            debuggable true
+            applicationIdSuffix ".dbg"
+            versionNameSuffix ".dbg"
         }
     }
-    compileOptions {
-        sourceCompatibility = 1.8
-        targetCompatibility = 1.8
+
+    buildFeatures {
+//        compose true
+        viewBinding true
     }
+
+    splits.abi {
+        enable true
+        reset()
+        include "arm64-v8a", "x86_64"
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8
+
+//    composeOptions {
+//        kotlinCompilerExtensionVersion "${compose_version}"
+//        kotlinCompilerVersion '1.3.70-dev-withExperimentalGoogleExtensions-20200424'
+//    }
 }
 
-dependencies {
-//    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.annotation:annotation:1.1.0'
+dependencies {  // todo use Jetpack Compose in the future
+//    implementation fileTree(dir: "libs", include: ["*.jar"])
+//    implementation "androidx.appcompat:appcompat:1.1.0"
+    implementation "androidx.constraintlayout:constraintlayout:1.1.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.61"
 
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-alpha-3'
-
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    debugImplementation "com.squareup.leakcanary:leakcanary-android:2.2"
+    testImplementation "junit:junit:4.13"
+    androidTestImplementation "androidx.test.ext:junit:1.1.1"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.2.0"
 }
