@@ -1,2 +1,2 @@
 # UnlockMe
-A broadcast receiver to capture image on failed screen unlock attempts.
+An Android broadcast receiver to capture images on failed screen unlock attempts via Device Admin API.
