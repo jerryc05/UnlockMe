@@ -53,15 +53,23 @@ android {
 //    }
 }
 
-dependencies {  // todo use Jetpack Compose in the future
+dependencies {
 //    implementation fileTree(dir: "libs", include: ["*.jar"])
-//    implementation "androidx.appcompat:appcompat:1.1.0"
-    implementation "androidx.constraintlayout:constraintlayout:1.1.3"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.0"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.61"
+    //noinspection GradleDynamicVersion
+    implementation "androidx.camera:camera-camera2:+"
+//    //noinspection GradleDynamicVersion
+    implementation "androidx.camera:camera-lifecycle:+"
+    //noinspection GradleDynamicVersion
+    implementation "androidx.constraintlayout:constraintlayout:+"
+    //noinspection GradleDynamicVersion
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:+"
+    //noinspection GradleDynamicVersion
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:+"
+    //noinspection GradleDynamicVersion
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    debugImplementation "com.squareup.leakcanary:leakcanary-android:2.2"
+    //noinspection GradleDynamicVersion
+    debugImplementation "com.squareup.leakcanary:leakcanary-android:+"
     testImplementation "junit:junit:4.13"
     androidTestImplementation "androidx.test.ext:junit:1.1.1"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.2.0"
